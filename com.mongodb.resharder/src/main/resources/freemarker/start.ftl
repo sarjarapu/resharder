@@ -1,7 +1,11 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html><head>
-<meta content="text/html; charset=ISO-8859-1" http-equiv="content-type">
-  <title>MongoDB Resharder</title>
+
+
+
+
+<meta content="text/html; charset=ISO-8859-1" http-equiv="content-type"><title>MongoDB Resharder</title>
+  
   <script type="text/javascript">
 if (window.addEventListener) { // Mozilla, Netscape, Firefox
     window.addEventListener('load', WindowLoad, false);
@@ -20,10 +24,9 @@ function WindowLoad(event) {
   </script>
   
   <link rel="stylesheet" type="text/css" href="/styles.css">
-  <title></title>
+  
 
   
-</head><body>
 <style type="text/css">
 .console {
   font-family:Courier;
@@ -36,8 +39,9 @@ function WindowLoad(event) {
   font-size: 75%;
   height: 400px;
 }
-</style>
-<div id="messages" class="messageLog" style="display: none";></div>
+</style></head><body>
+
+<div id="messages" class="messageLog" style="display: none;" ;=""></div>
 <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js?lang=css&amp;skin=sunburst">
 </script>
 
@@ -119,55 +123,83 @@ Status</td>
       </td>
       <td style="vertical-align: top;"><br>
       </td>
-      <td width="50%" height="30%" colspan="1" rowspan="2" style="vertical-align: top; text-align: center;">
+      <td colspan="1" rowspan="2" style="vertical-align: top; text-align: center;" height="30%" width="50%">
       <div id="formDiv">
       <form name="reshard" action="">
-        <table style="width: 512px; height: 177px;">
+        <table style="width: 512px; height: 294px;">
           <tbody>
             <tr>
-              <td colspan="3" rowspan="1">Configure Resharder</td>
+              <td colspan="5" rowspan="1">Configure Resharder</td>
             </tr>
             <tr>
               <td style="text-align: center;">Select
 Collection<br>
               </td>
-              <td style="text-align: right;">Host<br>
+              <td style="text-align: right;">Source Host<br>
               </td>
-              <td><input id="frmHost" name="host" value="localhost:28017"><br>
+              <td colspan="3" rowspan="1"><input style="width: 250px;" id="frmSrc" name="srchost" value="localhost:27017"><br>
               </td>
             </tr>
             <tr>
-              <td colspan="1" rowspan="3">
+              <td colspan="1" rowspan="7" style="vertical-align: top;">
               <#list collList as coll>
+              
               <p><input name="namespace" id="frmNamespace" value="${coll}" type="radio">${coll}
               </p>
+
               </#list><br>
+
               </td>
+              <td style="vertical-align: middle; text-align: right;">Target Host<br>
+              </td>
+              <td colspan="3" rowspan="1" style="vertical-align: top;"><input style="width: 250px;" id="frmTgt" name="tgthost" value="localhost:27017"></td>
+            </tr>
+            <tr>
+              <td style="vertical-align: middle; text-align: right;">Log Host<br>
+              </td>
+              <td colspan="3" rowspan="1" style="vertical-align: top;"><input style="width: 250px;" id="frmLog" name="loghost" value="localhost:28017"><br>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="4" rowspan="1" style="vertical-align: top;"><br>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="4" rowspan="1" style="vertical-align: top;">Clone/Reshard Options<br>
+              </td>
+            </tr>
+<tr>
+              
               <td style="text-align: right;">Namespace<br>
               </td>
-              <td><input id="frmTargetns" name="targetns" value="resharder.clone"><br>
+              <td colspan="3" rowspan="1"><input style="width: 250px;" id="frmTargetns" name="targetns" value="resharder.clone"><br>
               </td>
             </tr>
             <tr>
               <td style="text-align: right;">Read Batch<br>
               </td>
-              <td><input id="frmReadBatch" name="readBatch" value="100"><br>
+              <td><input style="width: 25px;" id="frmReadBatch" name="readBatch" value="100"><br>
+              </td><td style="vertical-align: middle; text-align: right;">Reshard<br>
               </td>
+              <td style="vertical-align: top;"><input id="frmReshard" name="reshard" type="checkbox"><br>
+              </td>
+
             </tr>
             <tr>
               <td style="text-align: right;">Write Batch<br>
               </td>
-              <td><input id="frmWriteBatch" name="writeBatch" value="50"><br>
+              <td><input style="width: 25px;" id="frmWriteBatch" name="writeBatch" value="50"><br>
+              </td><td style="vertical-align: middle; text-align: right; width: 100px;">Shard Key<br>
               </td>
+              <td style="vertical-align: top;"><input id="frmKey" name="key"><br>
+              </td>
+
             </tr>
             <tr>
-              <td colspan="3" rowspan="1"><button type="submit" name="submit" class="button" id="submit_btn" value="Submit">Reshard</button><br>
+              <td colspan="5" rowspan="1"><button type="submit" name="submit" class="button" id="submit_btn" value="Submit">Reshard</button><br>
               </td>
             </tr>
-            <tr>
-              <td colspan="3" rowspan="1" style="vertical-align: top;"><br>
-              </td>
-            </tr>
+            
           </tbody>
         </table>
       </form>
@@ -179,7 +211,8 @@ Collection<br>
       </td>
       <td style="vertical-align: top;">
 <div class="status" id="term"></div>
-      </td>
+      <br>
+</td>
     </tr>
     <tr>
       <td><br>

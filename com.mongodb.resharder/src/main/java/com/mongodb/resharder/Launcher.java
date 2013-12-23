@@ -14,6 +14,9 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringEscapeUtils;
@@ -38,6 +41,7 @@ import freemarker.template.TemplateException;
 
 public class Launcher {
 	private final Configuration _cfg;
+	public static ScheduledExecutorService _tp = Executors.newScheduledThreadPool(25);
 
 	public static void main(String[] args) throws IOException {
 		Config.processArgs(args);
@@ -95,18 +99,19 @@ public class Launcher {
 			@Override
 			public void doHandle(Request request, Response response, Writer writer) throws IOException,
 					TemplateException {
-				SimpleHash root = new SimpleHash();
 
-				//TODO - prevent configuration from changing while cloning is in progress
-				Config.set_Namespace(request.queryParams("namespace"));
-				Config.set_TargetNamepace(request.queryParams("targetns"));
-				Config.set_readBatch(Integer.parseInt(request.queryParams("readBatch")));
-				Config.set_writeBatch(Integer.parseInt(request.queryParams("writeBatch")));
-				
-				Resharder rs = new Resharder();
-				new Thread(rs).start();
-				
-				template.process(root, writer);
+				if (!DocWriter.get_running()) {
+					new Config(request.queryParams("namespace"), request.queryParams("targetns"),
+							Integer.parseInt(request.queryParams("readBatch")), Integer.parseInt(request.queryParams("writeBatch")),
+							Boolean.parseBoolean(request.queryParams("reshard")), request.queryParams("key"),
+							Boolean.parseBoolean(request.queryParams("secondary")), request.queryParams("srchost"),
+							request.queryParams("tgthost"), request.queryParams("loghost"));
+
+					Resharder rs = new Resharder();
+					_tp.schedule(rs, 0, TimeUnit.MILLISECONDS);
+				}
+
+				template.process(new SimpleHash(), writer);
 			};
 		});
 
@@ -157,7 +162,7 @@ public class Launcher {
 			public void doHandle(Request request, Response response, Writer writer) throws IOException,
 					TemplateException {
 				SimpleHash root = new SimpleHash();
-				
+
 				template.process(ShardMapper.getShardingStatus(root), writer);
 			}
 		});

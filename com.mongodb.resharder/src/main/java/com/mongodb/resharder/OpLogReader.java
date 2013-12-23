@@ -16,13 +16,10 @@ import com.mongodb.MongoClient;
 public class OpLogReader implements Runnable {
 	private BSONTimestamp _ts;
 	private static AtomicBoolean _running = new AtomicBoolean(false);
-	private DBCollection _oplog = null, _tgtOplog = null;
-	private String _ns;
+	private DBCollection _oplog = null;
 
-	public OpLogReader(DBCollection oplog, DBCollection tgtOplog, String ns) {
-		this._ns = ns;
+	public OpLogReader(DBCollection oplog) {
 		this._oplog = oplog;
-		this._tgtOplog = tgtOplog;
 		_running.set(true);
 	}
 
@@ -40,8 +37,10 @@ public class OpLogReader implements Runnable {
 			while (_running.get()) {
 				_oplog.getDB().requestStart();
 				_oplog.getDB().requestEnsureConnection();
-				_tgtOplog.getDB().requestStart();
-				_tgtOplog.getDB().requestEnsureConnection();
+				
+				// TODO - What happens when multiple threads call this concurrently on the same client?
+				Config.get_oplog().getDB().requestStart();
+				Config.get_oplog().getDB().requestEnsureConnection();
 
 				DBCursor cursor = _oplog.find(new BasicDBObject("ns","test.grades")).sort(new BasicDBObject("$natural", -1)).limit(1);
 				if (cursor.hasNext()) {
@@ -52,7 +51,7 @@ public class OpLogReader implements Runnable {
 				}
 				
 
-				BasicDBObject query = new BasicDBObject("ts", new BasicDBObject("$gt", _ts)).append("ns", _ns);
+				BasicDBObject query = new BasicDBObject("ts", new BasicDBObject("$gt", _ts)).append("ns", Config.get_Namepace());
 				cursor = _oplog.find(query).sort(new BasicDBObject("$natural", 1)).addOption(Bytes.QUERYOPTION_TAILABLE)
 						.addOption(Bytes.QUERYOPTION_AWAITDATA);
 
@@ -61,8 +60,8 @@ public class OpLogReader implements Runnable {
 
 				try {
 					while (cursor.hasNext() && _running.get()) {
-						if (_tgtOplog != null) {
-							_tgtOplog.insert(cursor.next());
+						if (Config.get_oplog() != null) {
+							Config.get_oplog().insert(cursor.next());
 						} else {
 							throw new Exception("Unable to write oplog data, no collection has been set for output.");
 						}
@@ -74,7 +73,7 @@ public class OpLogReader implements Runnable {
 					} catch (final Throwable t) { /* NOOP */
 					}
 					_oplog.getDB().requestDone();
-					_tgtOplog.getDB().requestDone();
+					Config.get_oplog().getDB().requestDone();
 				}
 
 				try {

@@ -11,7 +11,8 @@ import com.mongodb.DBCursor;
 
 public class CollectionScanner implements Runnable {
 	private DBCollection _source = null;
-	private static AtomicBoolean _running = new AtomicBoolean(false);
+	private boolean _running = false;
+	private static AtomicBoolean _shutdown = new AtomicBoolean(false);
 	private int _numread = 0;
 	private int _batch = 0;
 
@@ -21,7 +22,7 @@ public class CollectionScanner implements Runnable {
 	}
 
 	public void run() {
-		_running.set(true);
+		_running = true;
 
 		// use the same socket for all reads
 		try {
@@ -29,8 +30,14 @@ public class CollectionScanner implements Runnable {
 			_source.getDB().requestEnsureConnection();
 			MessageLog.push("Reader started.", this.getClass().getSimpleName());
 
-			while (_running.get()) {
+			while (_running && !_shutdown.get()) {
 				DBCursor cursor = _source.find().sort(new BasicDBObject("$natural", 1)).skip(_numread).limit(_batch);
+				
+				if (!cursor.hasNext()) {
+					MessageLog.push("Collection scan completed...", this.getClass().getSimpleName());
+					
+					_running = false;
+				}
 				try {
 				
 					while (cursor.hasNext()) {
@@ -49,11 +56,7 @@ public class CollectionScanner implements Runnable {
 		}
 	}
 
-	public static boolean get_running() {
-		return _running.get();
-	}
-
-	public static void set_running(boolean running) {
-		_running.set(running);
+	public static void shutdown() {
+		_shutdown.set(true);
 	}
 }
