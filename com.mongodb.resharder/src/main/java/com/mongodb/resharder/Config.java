@@ -2,19 +2,19 @@ package com.mongodb.resharder;
 
 import java.net.UnknownHostException;
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 
-import freemarker.template.SimpleHash;
-
 public class Config {
 	private static String _ns, _targetns, _key;
 	private static DBCollection _src, _tgt, _log, _oplog;
-	private static DB _adminDB;
+	private static DB _adminDB, _configDB, _logDB;
 	private static boolean _secondary = false, _reshard = false;
 	private static int _readBatch, _writeBatch;
+	private static boolean _initialized = false;
 
 	public Config(String namespace, String targetns, int readBatch, int writeBatch, boolean reshard, String key,
 			boolean secondary, String srchost, String tgthost, String loghost) throws UnknownHostException {
@@ -22,16 +22,20 @@ public class Config {
 		MongoClient tgtClient = new MongoClient(new MongoClientURI("mongodb://" + tgthost));
 		MongoClient logClient = new MongoClient(new MongoClientURI("mongodb://" + loghost));
 
-		_log = logClient.getDB("resharder").getCollection("log");
 		_adminDB = srcClient.getDB("admin");
-
+		_configDB = srcClient.getDB("config");
+		_logDB = logClient.getDB("resharder");
+		
+		// TODO setup config if shard on copy selected.
 		_targetns = targetns;
 		String[] params = _targetns.split("\\.");
 		_tgt = tgtClient.getDB(params[0]).getCollection(params[1]);
 		_tgt.drop();
-		
-		_oplog = logClient.getDB("resharder").getCollection("oplog_out");
+
+		_log = _logDB.getCollection("log");
+		_oplog = _logDB.getCollection("oplog_out");
 		_log.drop();
+		_oplog.drop();
 
 		_reshard = reshard;
 		_key = key;
@@ -40,6 +44,7 @@ public class Config {
 		_readBatch = readBatch;
 		_writeBatch = writeBatch;
 		_secondary = secondary;
+		_initialized = true;
 	}
 
 	public static void processArgs(String[] args) throws UnknownHostException {
@@ -129,5 +134,17 @@ public class Config {
 
 	public static DB get_adminDB() {
 		return _adminDB;
+	}
+
+	public static boolean isInitialized() {
+		return _initialized;
+	}
+
+	public static DB get_configDB() {
+		return _configDB;
+	}
+
+	public static DB get_logDB() {
+		return _logDB;
 	}
 }

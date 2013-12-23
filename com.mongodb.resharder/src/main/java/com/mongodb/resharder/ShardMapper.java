@@ -33,17 +33,25 @@ public class ShardMapper {
 		BasicDBObject _shardconf = new BasicDBObject();
 		MongoClient _mongo;
 
+		DB configDB, adminDB, logDB;
 		try {
-			_mongo = new MongoClient();
+			if (Config.isInitialized()) {
+				_mongo = new MongoClient();
+
+				configDB = _mongo.getDB("config");
+				adminDB = _mongo.getDB("admin");
+				logDB = _mongo.getDB("resharder");
+			}
+			else {
+				configDB = Config.get_configDB();
+				adminDB = Config.get_adminDB();
+				logDB = Config.get_logDB();
+			}
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return null;
 		}
-
-		DB configDB = _mongo.getDB("config");
-		DB adminDB = _mongo.getDB("admin");
-		DB resharderDB = _mongo.getDB("resharder");
 
 		_shardconf.put("version", configDB.getCollection("version").findOne());
 
@@ -164,11 +172,11 @@ public class ShardMapper {
 			hash.put("collections", _shardconf.toString());
 			hash.put("collList", _collections);
 
-			DBCollection config = resharderDB.getCollection("config");
+			DBCollection config = logDB.getCollection("config");
 			if (config != null)
 				config.drop();
 			
-			resharderDB.getCollection("config").insert(_shardconf);
+			config.insert(_shardconf);
 		} finally {
 			if (dbCursor != null)
 				dbCursor.close();

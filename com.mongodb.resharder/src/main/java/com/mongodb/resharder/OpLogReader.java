@@ -1,8 +1,6 @@
 package com.mongodb.resharder;
 
-import java.util.Date;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.bson.types.BSONTimestamp;
 
@@ -11,7 +9,6 @@ import com.mongodb.Bytes;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
-import com.mongodb.MongoClient;
 
 public class OpLogReader implements Runnable {
 	private BSONTimestamp _ts;

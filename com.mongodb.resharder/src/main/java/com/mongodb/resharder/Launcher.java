@@ -3,7 +3,6 @@ package com.mongodb.resharder;
 import static spark.Spark.setPort;
 import static spark.Spark.get;
 import static spark.Spark.post;
-import static spark.Spark.setPort;
 import spark.Request;
 import spark.Response;
 import spark.Route;
@@ -11,28 +10,9 @@ import spark.Route;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
-
-import org.apache.commons.lang3.StringEscapeUtils;
-
-import com.mongodb.AggregationOutput;
-import com.mongodb.BasicDBList;
-import com.mongodb.BasicDBObject;
-import com.mongodb.CommandResult;
-import com.mongodb.DB;
-import com.mongodb.DBCollection;
-import com.mongodb.DBCursor;
-import com.mongodb.DBObject;
-import com.mongodb.GroupCommand;
-import com.mongodb.MongoClient;
-import com.mongodb.MongoClientURI;
-import com.mongodb.ServerAddress;
 
 import freemarker.template.Configuration;
 import freemarker.template.SimpleHash;

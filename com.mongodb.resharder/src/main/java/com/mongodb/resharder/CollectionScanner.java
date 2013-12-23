@@ -42,6 +42,8 @@ public class CollectionScanner implements Runnable {
 				
 					while (cursor.hasNext()) {
 						// Put docs on queue
+						
+						// TODO check if orphan
 						DocWriter.push(cursor.next());
 						_numread++;
 					}
