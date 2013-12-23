@@ -1,20 +1,12 @@
 package com.mongodb.resharder;
 
-import java.net.UnknownHostException;
-import java.util.Date;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.CommandResult;
-import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.MongoClient;
-import com.mongodb.MongoClientURI;
-import com.mongodb.MongoURI;
 
 public class Resharder implements Runnable {
 
@@ -26,9 +18,8 @@ public class Resharder implements Runnable {
 
 	public void run() {
 		try {
-			// Shutting down balancer...does this happen immediately and
-			// what happens if a chunk migration is in progress?
-			CommandResult result = Config.get_adminDB().doEval(
+			// Tell balancer not to run
+			Config.get_adminDB().doEval(
 					"function() {sh.setBalancerState(false); return sh.getBalancerState();}", new Object[0]);
 
 			MessageLog.push("Balancer state set to false.", this.getClass().getSimpleName());
@@ -57,8 +48,9 @@ public class Resharder implements Runnable {
 			for (Shard shard : shards) {
 				MongoClient mongo = new MongoClient(shard.hosts());
 
-				// TODO check for secondary read flag and if set only read oplog
+				// TODO check for secondary read and if true only read oplog
 				// from primary
+				
 				// Get a connection to the shard Primary
 				params = Config.get_Namepace().split("\\.");
 				DBCollection source = mongo.getDB(params[0]).getCollection(params[1]);

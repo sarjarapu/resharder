@@ -1,6 +1,10 @@
 package com.mongodb.resharder;
 
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
@@ -15,6 +19,7 @@ public class Config {
 	private static boolean _secondary = false, _reshard = false;
 	private static int _readBatch, _writeBatch;
 	private static boolean _initialized = false;
+	private static Map<String, List<Chunk>> _chunks = new HashMap<String, List<Chunk>>();
 
 	public Config(String namespace, String targetns, int readBatch, int writeBatch, boolean reshard, String key,
 			boolean secondary, String srchost, String tgthost, String loghost) throws UnknownHostException {
@@ -44,6 +49,8 @@ public class Config {
 		_readBatch = readBatch;
 		_writeBatch = writeBatch;
 		_secondary = secondary;
+		
+		_chunks = new HashMap<String, List<Chunk>>();
 		_initialized = true;
 	}
 
@@ -146,5 +153,9 @@ public class Config {
 
 	public static DB get_logDB() {
 		return _logDB;
+	}
+
+	public static Map<String, List<Chunk>> get_chunks() {
+		return _chunks;
 	}
 }

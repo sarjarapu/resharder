@@ -35,7 +35,7 @@ public class ShardMapper {
 
 		DB configDB, adminDB, logDB;
 		try {
-			if (Config.isInitialized()) {
+			if (!Config.isInitialized()) {
 				_mongo = new MongoClient();
 
 				configDB = _mongo.getDB("config");
@@ -106,11 +106,11 @@ public class ShardMapper {
 		hash.put("numRepl", numRepl);
 		hash.put("numServers", numServers);
 
-		DBCollection dbs = configDB.getCollection("databases");
+		DBCollection databases = configDB.getCollection("databases"), collections;
 
 		DBCursor dbCursor = null, collectionCursor = null;
 		try {
-			dbCursor = dbs.find().sort(new BasicDBObject("name", 1));
+			dbCursor = databases.find().sort(new BasicDBObject("name", 1));
 			shards = new ArrayList<DBObject>();
 			while (dbCursor.hasNext()) {
 				DBObject curDB = dbCursor.next();
@@ -118,14 +118,14 @@ public class ShardMapper {
 				database.putAll(curDB);
 
 				if (curDB.get("partitioned").equals(true)) {
-					DBCollection partCols = configDB.getCollection("collections");
+					collections = configDB.getCollection("collections");
 
 					Pattern regex = Pattern.compile("^" + StringEscapeUtils.escapeJava(curDB.get("_id").toString())
 							+ "\\.");
 
-					collectionCursor = partCols.find(new BasicDBObject("_id", regex)).sort(new BasicDBObject("_id", 1));
+					collectionCursor = collections.find(new BasicDBObject("_id", regex)).sort(new BasicDBObject("_id", 1));
 
-					List<BasicDBObject> collections = new ArrayList<BasicDBObject>();
+					List<BasicDBObject> collectionsList = new ArrayList<BasicDBObject>();
 					while (collectionCursor.hasNext()) {
 						DBObject curColl = collectionCursor.next();
 
@@ -143,26 +143,33 @@ public class ShardMapper {
 							List<BasicDBObject> chunks = new ArrayList<BasicDBObject>();
 							int totalChunks = 0;
 							for (Object obj : info) {
-								BasicDBObject shard = (BasicDBObject) obj;
-								totalChunks += shard.getInt("nChunks");
+								BasicDBObject chunk = (BasicDBObject) obj;
+								totalChunks += chunk.getInt("nChunks");
+								
+								// Add list of chunks for this shard to the config map
+								String key = curColl.get("_id") + "." + chunk.getString("shard");
+								Config.get_chunks().put(key, new ArrayList<Chunk>());
 
 								DBCursor chunkCursor = chunkColl.find(new BasicDBObject("ns", curColl.get("_id")),
 										new BasicDBObject("shard", curDB.get("host")))
 										.sort(new BasicDBObject("min", 1));
 
-								List<DBObject> al1 = new ArrayList<DBObject>();
+								List<DBObject> chunkDocs = new ArrayList<DBObject>();
 								while (chunkCursor.hasNext()) {
-									al1.add(chunkCursor.next());
+									DBObject doc = (DBObject) chunkCursor.next();
+									chunkDocs.add(doc);
+									
+									Config.get_chunks().get(key).add(new Chunk(doc.get("min"), doc.get("max")));
 								}
-								shard.put("chunks", al1);
-								chunks.add(shard);
+								chunk.put("chunks", chunkDocs);
+								chunks.add(chunk);
 							}
 
 							collection.put("shards", chunks);
 							collection.put("nChunks", totalChunks);
-							collections.add(collection);
+							collectionsList.add(collection);
 						}
-						database.put("collections", collections);
+						database.put("collections", collectionsList);
 					}
 				}
 				shards.add(database);
