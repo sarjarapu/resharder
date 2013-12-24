@@ -112,12 +112,12 @@ public class Chunk implements Comparable<Chunk> {
 					o._min.toString()) > 0) ? 1 : 0;
 
 		else if (_min instanceof Integer) {
-			Integer min = (Integer) _min, max = (Integer) _max, oMin = (Integer) o._max, oMax = (Integer) o._max;
+			Integer min = (Integer) _min, max = (Integer) _max, oMin = (Integer) o._min, oMax = (Integer) o._max;
 			val = min.compareTo(oMax) >= 0 ? -1 : max.compareTo(oMin) <= 0 ? 1 : 0;
 		}
 
 		else if (_min instanceof Long) {
-			Long min = (Long) _min, max = (Long) _max, oMin = (Long) o._max, oMax = (Long) o._max;
+			Long min = (Long) _min, max = (Long) _max, oMin = (Long) o._min, oMax = (Long) o._max;
 			val = min.compareTo(oMax) >= 0 ? -1 : max.compareTo(oMin) <= 0 ? 1 : 0;
 		}
 
