@@ -81,14 +81,20 @@ public class Launcher {
 					TemplateException {
 
 				if (!DocWriter.get_running()) {
-					new Config(request.queryParams("namespace"), request.queryParams("targetns"),
-							Integer.parseInt(request.queryParams("readBatch")), Integer.parseInt(request.queryParams("writeBatch")),
-							Boolean.parseBoolean(request.queryParams("reshard")), request.queryParams("key"),
-							Boolean.parseBoolean(request.queryParams("secondary")), request.queryParams("srchost"),
-							request.queryParams("tgthost"), request.queryParams("loghost"));
+					try {
+						new Config(request.queryParams("namespace"), request.queryParams("targetns"),
+								Integer.parseInt(request.queryParams("readBatch")), Integer.parseInt(request.queryParams("writeBatch")),
+								Boolean.parseBoolean(request.queryParams("reshard")), request.queryParams("key"),
+								Boolean.parseBoolean(request.queryParams("secondary")), request.queryParams("srchost"),
+								request.queryParams("tgthost"), request.queryParams("loghost"));
 
-					Resharder rs = new Resharder();
-					_tp.schedule(rs, 0, TimeUnit.MILLISECONDS);
+						Resharder rs = new Resharder();
+						_tp.schedule(rs, 0, TimeUnit.MILLISECONDS);
+					} catch (NumberFormatException e) {
+						e.printStackTrace();
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 				}
 
 				template.process(new SimpleHash(), writer);
@@ -106,6 +112,16 @@ public class Launcher {
 		});
 
 		get(new FreemarkerBasedRoute("/form.js", "form.js") {
+			@Override
+			protected void doHandle(Request request, Response response, Writer writer) throws IOException,
+					TemplateException {
+				template.process(new SimpleHash(), writer);
+
+			}
+
+		});
+
+		get(new FreemarkerBasedRoute("/jquery.sparkline.min.js", "jquery.sparkline.min.js") {
 			@Override
 			protected void doHandle(Request request, Response response, Writer writer) throws IOException,
 					TemplateException {

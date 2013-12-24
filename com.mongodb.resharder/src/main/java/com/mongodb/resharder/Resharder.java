@@ -98,14 +98,14 @@ public class Resharder implements Runnable {
 				Arrays.sort(chunks);
 				Chunk root = chunks[chunks.length / 2].load(chunks, 0, chunks.length - 1);
 
-				CollectionScanner cs = new CollectionScanner(source, Config.get_readBatch(), root);
+				CollectionScanner cs = new CollectionScanner(source, root);
 				Launcher._tp.schedule(cs, 0, TimeUnit.MILLISECONDS);
 			}
 
 			// Start the writer thread
 			// TODO - determine if one writer per reader is needed
 
-			DocWriter dw = new DocWriter(Config.get_tgtCollection(), Config.get_writeBatch());
+			DocWriter dw = new DocWriter();
 			Launcher._tp.schedule(dw, 0, TimeUnit.MILLISECONDS);
 		} catch (Exception e) {
 			e.printStackTrace();

@@ -1,3 +1,9 @@
+
+var auto_refresh = setInterval(function (){
+		$('.messageLog').load('/getStatus', function(data){document.getElementById("term").innerHTML += data});
+		$('.counterClass').load('/getCounters', function(data){document.getElementById("monitor").innerHTML = data});
+	}, 1000); // refresh every second
+
 $(function() {
 	$(".button").click(
 			function() {
@@ -9,7 +15,7 @@ $(function() {
 				var srchost = $("input#frmSrc").val();
 				var tgthost = $("input#frmTgt").val();
 				var loghost = $("input#frmLog").val();
-				var reshard = $("input#frmReshard").checked;
+				var reshard = $("input#frmReshard").val();
 				var key = $("input#frmKey").val();
 
 				var dataString = "namespace=" + ns + "&targetns=" + targetns
@@ -29,7 +35,8 @@ $(function() {
 					// host },
 					success : function() {
 						$('#formDiv').html(
-								"<div id='term' class='console'></div>");
+								"<div id='term' class='console'></div><br>" +
+								"<div id='monitor' class='console'</div>");
 						$('#term').html(
 								"Resharding initiated for " + ns + "...<br>");
 					}

@@ -42,17 +42,12 @@ function WindowLoad(event) {
 </style></head><body>
 
 <div id="messages" class="messageLog" style="display: none;" ;=""></div>
+<div id="counters" class="counterClass" style="display: none;" ;=""></div>
 <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js?lang=css&amp;skin=sunburst">
 </script>
 
 <script src="/jquery-2.0.3.min.js"> </script>
 <script src="/form.js"></script>
-
-<script type="text/javascript">
-var auto_refresh = setInterval(function (){
-		$('.messageLog').load('/getStatus', function(data){document.getElementById("term").innerHTML += data});
-	}, 1000); // refresh every second
-</script>
 
 <table style="text-align: left; width: 100%; margin-left: auto; margin-right: auto;" border="0" cellpadding="0" cellspacing="0">
   <tbody>
@@ -181,7 +176,7 @@ Collection<br>
               <td><input style="width: 25px;" id="frmReadBatch" name="readBatch" value="100"><br>
               </td><td style="vertical-align: middle; text-align: right;">Reshard<br>
               </td>
-              <td style="vertical-align: top;"><input id="frmReshard" name="reshard" type="checkbox"><br>
+              <td style="vertical-align: top;"><input id="frmReshard" name="frmReshard" type="checkbox" value="true"><br>
               </td>
 
             </tr>

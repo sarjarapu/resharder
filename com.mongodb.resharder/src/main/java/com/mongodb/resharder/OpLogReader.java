@@ -33,12 +33,12 @@ public class OpLogReader implements Runnable {
 			while (_running.get()) {
 				_oplog.getDB().requestStart();
 				_oplog.getDB().requestEnsureConnection();
-				MessageLog.push("Reader connected to " + _oplog.getDB().getMongo().getConnectPoint() + ".", this.getClass().getSimpleName());
+				MessageLog.push("connected to " + _oplog.getDB().getMongo().getConnectPoint() + ".", this.getClass().getSimpleName());
 				
 				// TODO - What happens when multiple threads call this concurrently on the same client?
 				Config.get_oplog().getDB().requestStart();
 				Config.get_oplog().getDB().requestEnsureConnection();
-				MessageLog.push("Reader outputting to " + Config.get_oplog().getDB().getMongo().getConnectPoint() + ".", this.getClass().getSimpleName());
+				MessageLog.push("outputting to " + Config.get_oplog().getDB().getMongo().getConnectPoint() + ".", this.getClass().getSimpleName());
 
 				DBCursor cursor = _oplog.find(new BasicDBObject("ns","test.grades")).sort(new BasicDBObject("$natural", -1)).limit(1);
 				if (cursor.hasNext()) {
@@ -55,11 +55,7 @@ public class OpLogReader implements Runnable {
 
 				try {
 					while (cursor.hasNext() && _running.get()) {
-						if (Config.get_oplog() != null) {
-							Config.get_oplog().insert(cursor.next());
-						} else {
-							throw new Exception("Unable to write oplog data, no collection has been set for output.");
-						}
+						Config.oplogWrite(cursor.next());
 					}
 				} finally {
 					try {
@@ -67,7 +63,7 @@ public class OpLogReader implements Runnable {
 							cursor.close();
 					} catch (final Throwable t) { /* NOOP */
 					}
-					MessageLog.push("Reader disconnected from " + _oplog.getDB().getMongo().getConnectPoint() + ".", this.getClass().getSimpleName());
+					MessageLog.push("disconnected from " + _oplog.getDB().getMongo().getConnectPoint() + ".", this.getClass().getSimpleName());
 					_oplog.getDB().requestDone();
 					Config.get_oplog().getDB().requestDone();
 				}

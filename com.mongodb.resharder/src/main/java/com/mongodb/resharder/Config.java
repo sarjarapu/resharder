@@ -7,6 +7,7 @@ import java.util.Map;
 
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
+import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 
@@ -18,9 +19,18 @@ public class Config {
 	private static int _readBatch, _writeBatch;
 	private static boolean _initialized = false;
 	private static Map<String, List<Chunk>> _chunks = new HashMap<String, List<Chunk>>();
+	private static long _docCount, _orphanCount, _oplogCount; 
 
 	public Config(String namespace, String targetns, int readBatch, int writeBatch, boolean reshard, String key,
-			boolean secondary, String srchost, String tgthost, String loghost) throws UnknownHostException {
+			boolean secondary, String srchost, String tgthost, String loghost) throws Exception {
+		
+		// TODO - check if a clone is in process and prompt to kill it
+		// for now kill any resharder threads that might be running
+		if (DocWriter.get_running()) {
+			MessageLog.push("ERROR:, clone operation in progress.", this.getClass().getSimpleName());
+			throw new Exception("ERROR:, clone operation in progress.");
+		}
+		
 		MongoClient srcClient = new MongoClient(new MongoClientURI("mongodb://" + srchost));
 		MongoClient tgtClient = new MongoClient(new MongoClientURI("mongodb://" + tgthost));
 		MongoClient logClient = new MongoClient(new MongoClientURI("mongodb://" + loghost));
@@ -49,7 +59,31 @@ public class Config {
 		_secondary = secondary;
 		
 		_chunks = new HashMap<String, List<Chunk>>();
+		
+		_docCount = 0;
+		_orphanCount = 0;
+		_oplogCount = 0;
+		
 		_initialized = true;
+	}
+
+	public static void oplogWrite(DBObject doc) throws Exception {
+		if (Config.get_oplog() != null) {
+			Config.get_oplog().insert(doc);
+		} else {
+			throw new Exception("Unable to write oplog data, no collection has been set for output.");
+		}
+		Config._oplogCount++;
+	}
+
+	public static void docWrite(List<DBObject> docs) {
+		if (docs.size() > 0) {
+			// TODO - should there be a stronger write concern on this op than
+			// default?
+			_tgt.insert(docs.toArray(new DBObject[0]));
+		}
+		
+		Config._docCount += docs.size();
 	}
 
 	public static void processArgs(String[] args) throws UnknownHostException {
@@ -156,5 +190,21 @@ public class Config {
 
 	public static Map<String, List<Chunk>> get_chunks() {
 		return _chunks;
+	}
+
+	public static long get_orphans() {
+		return _orphanCount;
+	}
+
+	public static void orphanDropped() {
+		Config._orphanCount++;
+	}
+
+	public static long get_docCount() {
+		return _docCount;
+	}
+
+	public static long get_oplogCount() {
+		return _oplogCount;
 	}
 }
