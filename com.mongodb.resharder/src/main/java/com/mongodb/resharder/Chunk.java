@@ -34,7 +34,8 @@ public class Chunk implements Comparable<Chunk> {
 
 	public boolean isOrphan(Object pKey) {
 		if (pKey instanceof String) {
-			if (_min.toString().compareTo(pKey.toString()) < 0 && _max.toString().compareTo(pKey.toString()) >= 0)
+			//TODO this needs some debugging
+			if (_min.toString().compareTo(pKey.toString()) <= 0 && _max.toString().compareTo(pKey.toString()) >= 0)
 				return false;
 
 			if (_min.toString().compareTo(pKey.toString()) >= 0 && _left != null)
@@ -42,16 +43,15 @@ public class Chunk implements Comparable<Chunk> {
 
 			if (_max.toString().compareTo(pKey.toString()) < 0 && _right != null)
 				return _right.isOrphan(pKey);
-		} else if (pKey instanceof Integer) {
+		} 
+		else if (pKey instanceof Integer) {
 			Integer min = (Integer) _min, max = (Integer) _max, key = (Integer) pKey;
 
-			if (_max == null) {
-				if (min.compareTo(key) < 0)
+			if (_max == null && min.compareTo(key) <= 0)
 					return false;
-			} else if (_min == null) {
-				if (max.compareTo(key) > 0)
+			else if (_min == null && max.compareTo(key) >= 0)
 					return false;
-			} else if (min.compareTo(key) < 0 && max.compareTo(key) > 0)
+			else if (min.compareTo(key) <= 0 && max.compareTo(key) >= 0)
 				return false;
 
 			if (min.compareTo(key) > 0 && _left != null)
@@ -59,19 +59,20 @@ public class Chunk implements Comparable<Chunk> {
 
 			if (max.compareTo(key) < 0 && _right != null)
 				return _right.isOrphan(pKey);
-		} else if (pKey instanceof Long) {
+		} 
+		else if (pKey instanceof Long) {
 			Long min = (Long) _min, max = (Long) _max, key = (Long) pKey;
 
 			if (_max == null) {
-				if (min.compareTo(key) < 0)
+				if (min.compareTo(key) <= 0)
 					return false;
 			} else if (_min == null) {
-				if (max.compareTo(key) > 0)
+				if (max.compareTo(key) >= 0)
 					return false;
-			} else if (min.compareTo(key) < 0 && max.compareTo(key) > 0)
+			} else if (min.compareTo(key) <= 0 && max.compareTo(key) >= 0)
 				return false;
 			
-			if (min.compareTo(key) < 0 && max.compareTo(key) > 0)
+			if (min.compareTo(key) <= 0 && max.compareTo(key) >= 0)
 				return false;
 
 			if (min.compareTo(key) > 0 && _left != null)

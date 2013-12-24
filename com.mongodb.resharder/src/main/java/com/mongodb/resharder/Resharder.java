@@ -18,13 +18,6 @@ public class Resharder implements Runnable {
 
 	public void run() {
 		try {
-			// Tell balancer not to run
-			Config.get_adminDB().doEval(
-					"function() {sh.setBalancerState(false); return sh.getBalancerState();}", new Object[0]);
-
-			MessageLog.push("Balancer state set to false.", this.getClass().getSimpleName());
-			
-			
 			// Wait for balancer to stop if active
 			DBCursor balancer;
 			while (true) {
@@ -40,6 +33,13 @@ public class Resharder implements Runnable {
 					balancer.close();
 				}
 			}
+			
+			// Tell balancer not to run
+			Config.get_adminDB().doEval(
+					"function() {sh.setBalancerState(false); return sh.getBalancerState();}", new Object[0]);
+
+			MessageLog.push("Balancer state set to false.", this.getClass().getSimpleName());
+			
 
 			ShardMapper.getShardingStatus(null);
 			List<Shard> shards = ShardMapper.getShards();

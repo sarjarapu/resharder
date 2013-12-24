@@ -31,7 +31,7 @@ public class CollectionScanner implements Runnable {
 		try {
 			_source.getDB().requestStart();
 			_source.getDB().requestEnsureConnection();
-			MessageLog.push("Reader started.", this.getClass().getSimpleName());
+			MessageLog.push("Reader connected to " + _source.getDB().getMongo().getConnectPoint() + ".", this.getClass().getSimpleName());
 
 			while (_running && !_shutdown.get()) {
 				DBCursor cursor = _source.find().sort(new BasicDBObject("$natural", 1)).skip(_numread).limit(_batch);
@@ -66,7 +66,7 @@ public class CollectionScanner implements Runnable {
 			e.printStackTrace();
 		} finally {
 			_source.getDB().requestDone();
-			MessageLog.push("Reader stopped.", this.getClass().getSimpleName());
+			MessageLog.push("Reader disconnected from " + _source.getDB().getMongo().getConnectPoint() + ".", this.getClass().getSimpleName());
 		}
 	}
 

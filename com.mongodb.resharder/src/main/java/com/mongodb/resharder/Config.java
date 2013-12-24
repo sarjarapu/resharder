@@ -61,6 +61,7 @@ public class Config {
 				break;
 
 			case "--target":
+				@SuppressWarnings("unused")
 				MongoClient tgtClient = new MongoClient(args[++i]);
 				break;
 

@@ -36,11 +36,10 @@ public class DocWriter implements Runnable {
 			Stack<DBObject> buffer = new Stack<DBObject>();
 
 			// use the same socket for all writes
-			// does this really cause the connection to be reused for writes?
-			// TODO - handle multiple writers to the same collection object
+			// TODO - determine if we need multiple writers to the same collection object
 			_collection.getDB().requestStart();
 			_collection.getDB().requestEnsureConnection();
-			MessageLog.push("Writer started.", this.getClass().getSimpleName());
+			MessageLog.push("Writer connected to " + _collection.getDB().getMongo().getConnectPoint(), this.getClass().getSimpleName() + ".");
 
 			while (_running.get()) {
 				while (!_queue.isEmpty()) {
@@ -76,8 +75,8 @@ public class DocWriter implements Runnable {
 			MessageLog.push("Shutting down clone operation...", this.getClass().getSimpleName());
 		} finally {
 			// close our connection
+			MessageLog.push("Writer disconnected from " + _collection.getDB().getMongo().getConnectPoint(), this.getClass().getSimpleName() + ".");
 			_collection.getDB().requestDone();
-			MessageLog.push("Writer stopped.", this.getClass().getSimpleName());
 			shutdown();
 		}
 	}
