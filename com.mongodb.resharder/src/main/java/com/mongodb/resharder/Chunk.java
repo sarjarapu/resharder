@@ -16,7 +16,7 @@ public class Chunk implements Comparable<Chunk> {
 	public Chunk(Object pMin, Object pMax, String shard) {
 		DBObject min = (DBObject) pMin, max = (DBObject) pMax;
 		_shardkey = max.toMap().keySet().toArray()[0].toString();
-		_shard =shard;
+		_shard = shard;
 
 		@SuppressWarnings("rawtypes")
 		Iterator it = max.toMap().values().iterator();
@@ -34,7 +34,7 @@ public class Chunk implements Comparable<Chunk> {
 
 	public boolean isOrphan(Object pKey) {
 		if (pKey instanceof String) {
-			//TODO this needs some debugging
+			// TODO this needs some debugging
 			if (_min.toString().compareTo(pKey.toString()) <= 0 && _max.toString().compareTo(pKey.toString()) >= 0)
 				return false;
 
@@ -43,14 +43,13 @@ public class Chunk implements Comparable<Chunk> {
 
 			if (_max.toString().compareTo(pKey.toString()) < 0 && _right != null)
 				return _right.isOrphan(pKey);
-		} 
-		else if (pKey instanceof Integer) {
+		} else if (pKey instanceof Integer) {
 			Integer min = (Integer) _min, max = (Integer) _max, key = (Integer) pKey;
 
 			if (_max == null && min.compareTo(key) <= 0)
-					return false;
+				return false;
 			else if (_min == null && max.compareTo(key) >= 0)
-					return false;
+				return false;
 			else if (min.compareTo(key) <= 0 && max.compareTo(key) >= 0)
 				return false;
 
@@ -59,8 +58,7 @@ public class Chunk implements Comparable<Chunk> {
 
 			if (max.compareTo(key) < 0 && _right != null)
 				return _right.isOrphan(pKey);
-		} 
-		else if (pKey instanceof Long) {
+		} else if (pKey instanceof Long) {
 			Long min = (Long) _min, max = (Long) _max, key = (Long) pKey;
 
 			if (_max == null) {
@@ -71,7 +69,7 @@ public class Chunk implements Comparable<Chunk> {
 					return false;
 			} else if (min.compareTo(key) <= 0 && max.compareTo(key) >= 0)
 				return false;
-			
+
 			if (min.compareTo(key) <= 0 && max.compareTo(key) >= 0)
 				return false;
 
@@ -109,16 +107,19 @@ public class Chunk implements Comparable<Chunk> {
 			return 1;
 
 		if (_min instanceof String)
+			//TODO needs debugging
 			val = (_min.toString().compareTo(o._max.toString()) < 0) ? -1 : (_max.toString().compareTo(
 					o._min.toString()) > 0) ? 1 : 0;
 
-		else if (_min instanceof Integer)
-			val = (Integer.parseInt(_min.toString()) < (int) o._max) ? -1 : (_max != null || Integer.parseInt(_max
-					.toString()) < (int) o._min) ? 1 : 0;
+		else if (_min instanceof Integer) {
+			Integer min = (Integer) _min, max = (Integer) _max, oMin = (Integer) o._max, oMax = (Integer) o._max;
+			val = min.compareTo(oMax) >= 0 ? -1 : max.compareTo(oMin) <= 0 ? 1 : 0;
+		}
 
-		else if (_min instanceof Long)
-			val = (_min != null || (long) _min < (long) o._max) ? -1
-					: (_max != null && (long) _max < (long) o._min) ? 1 : 0;
+		else if (_min instanceof Long) {
+			Long min = (Long) _min, max = (Long) _max, oMin = (Long) o._max, oMax = (Long) o._max;
+			val = min.compareTo(oMax) >= 0 ? -1 : max.compareTo(oMin) <= 0 ? 1 : 0;
+		}
 
 		return val;
 	}
