@@ -26,8 +26,14 @@ public class ShardMapper {
 		return _shards;
 	}
 
+	// TODO this class is very ugly but no time to cleanup this code, apologies
+	// if it hurts your eyes to read
+	
 	// Connect to mongos and pull the shard configuration
 	public static SimpleHash getShardingStatus(SimpleHash hash) {
+		if (hash == null)
+			hash = new SimpleHash();
+		
 		_shards = new ArrayList<Shard>();
 		List<String> _collections = new ArrayList<String>();
 		BasicDBObject _shardconf = new BasicDBObject();
@@ -41,8 +47,7 @@ public class ShardMapper {
 				configDB = _mongo.getDB("config");
 				adminDB = _mongo.getDB("admin");
 				logDB = _mongo.getDB("resharder");
-			}
-			else {
+			} else {
 				configDB = Config.get_configDB();
 				adminDB = Config.get_adminDB();
 				logDB = Config.get_logDB();
@@ -123,7 +128,8 @@ public class ShardMapper {
 					Pattern regex = Pattern.compile("^" + StringEscapeUtils.escapeJava(curDB.get("_id").toString())
 							+ "\\.");
 
-					collectionCursor = collections.find(new BasicDBObject("_id", regex)).sort(new BasicDBObject("_id", 1));
+					collectionCursor = collections.find(new BasicDBObject("_id", regex)).sort(
+							new BasicDBObject("_id", 1));
 
 					List<BasicDBObject> collectionsList = new ArrayList<BasicDBObject>();
 					while (collectionCursor.hasNext()) {
@@ -145,12 +151,14 @@ public class ShardMapper {
 							for (Object obj : info) {
 								BasicDBObject chunk = (BasicDBObject) obj;
 								totalChunks += chunk.getInt("nChunks");
-								
-								// Add list of chunks for this shard to the config map
-								String key = curColl.get("_id") + "." + chunk.getString("shard");
-								Config.get_chunks().put(key, new ArrayList<Chunk>());
 
-								DBCursor chunkCursor = chunkColl.find(new BasicDBObject("ns", curColl.get("_id")),
+								// Add list of chunks for this shard to the
+								// config map
+								String key = curColl.get("_id") + "." + chunk.getString("shard");
+								List<Chunk> chunkList= new ArrayList<Chunk>();
+								Config.get_chunks().put(key, chunkList);
+
+								DBCursor chunkCursor = chunkColl.find(new BasicDBObject("ns", curColl.get("_id")).append("shard", chunk.getString("shard")),
 										new BasicDBObject("shard", curDB.get("host")))
 										.sort(new BasicDBObject("min", 1));
 
@@ -158,8 +166,8 @@ public class ShardMapper {
 								while (chunkCursor.hasNext()) {
 									DBObject doc = (DBObject) chunkCursor.next();
 									chunkDocs.add(doc);
-									
-									Config.get_chunks().get(key).add(new Chunk(doc.get("min"), doc.get("max")));
+
+									chunkList.add(new Chunk(doc.get("min"), doc.get("max"), chunk.getString("shard")));
 								}
 								chunk.put("chunks", chunkDocs);
 								chunks.add(chunk);
@@ -182,7 +190,7 @@ public class ShardMapper {
 			DBCollection config = logDB.getCollection("config");
 			if (config != null)
 				config.drop();
-			
+
 			config.insert(_shardconf);
 		} finally {
 			if (dbCursor != null)

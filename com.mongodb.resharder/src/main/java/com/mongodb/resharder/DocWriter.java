@@ -71,6 +71,7 @@ public class DocWriter implements Runnable {
 				}
 			}
 		} catch (Exception e) {
+			e.printStackTrace();
 			MessageLog.push("ERROR: " + e.getMessage(), this.getClass().getSimpleName());
 			MessageLog.push("Shutting down clone operation...", this.getClass().getSimpleName());
 		} finally {

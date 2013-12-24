@@ -41,6 +41,7 @@ public class Resharder implements Runnable {
 				}
 			}
 
+			ShardMapper.getShardingStatus(null);
 			List<Shard> shards = ShardMapper.getShards();
 
 			// Start a reader for each shard
@@ -59,7 +60,11 @@ public class Resharder implements Runnable {
 				OpLogReader olr = new OpLogReader(oplog);
 				Launcher._tp.schedule(olr, 0, TimeUnit.MILLISECONDS);
 
-				CollectionScanner cs = new CollectionScanner(source, Config.get_readBatch());
+				String key = Config.get_Namepace() + "." + shard.getName();
+				Chunk[] chunks = Config.get_chunks().get(key).toArray(new Chunk[0]);
+				Chunk root = chunks[chunks.length / 2].load(chunks, 0, chunks.length - 1);
+				
+				CollectionScanner cs = new CollectionScanner(source, Config.get_readBatch(), root);
 				Launcher._tp.schedule(cs, 0, TimeUnit.MILLISECONDS);
 			}
 
