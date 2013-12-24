@@ -89,7 +89,7 @@ public class DocWriter implements Runnable {
 		}
 	}
 
-	private void shutdown() {
+	public static void shutdown() {
 		_running.set(false);
 		CollectionScanner.shutdown();
 	}

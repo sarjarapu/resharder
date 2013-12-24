@@ -11,7 +11,7 @@ import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 
 public class Config {
-	private static String _ns, _targetns, _key;
+	private static String _ns, _targetns, _reshardKey;
 	private static DBCollection _src, _tgt, _log, _oplog;
 	private static DB _adminDB, _configDB, _logDB;
 	private static boolean _secondary = false, _reshard = false;
@@ -41,7 +41,7 @@ public class Config {
 		_oplog.drop();
 
 		_reshard = reshard;
-		_key = key;
+		_reshardKey = key;
 
 		_ns = namespace;
 		_readBatch = readBatch;
@@ -88,7 +88,7 @@ public class Config {
 				break;
 
 			case "--key":
-				_key = args[++i];
+				_reshardKey = args[++i];
 				break;
 			}
 		}
@@ -122,8 +122,8 @@ public class Config {
 		return _writeBatch;
 	}
 
-	public static String get_key() {
-		return _key;
+	public static String get_reshardKey() {
+		return _reshardKey;
 	}
 
 	public static boolean is_reshard() {

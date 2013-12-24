@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.CommandResult;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.MongoClient;
@@ -19,6 +20,16 @@ public class Resharder implements Runnable {
 
 	public void run() {
 		try {
+			CommandResult result;
+
+			// Tell balancer not to run
+			result = Config.get_adminDB().doEval(
+					"function() {sh.setBalancerState(false); return sh.getBalancerState();}", new Object[0]);
+
+			if (Boolean.parseBoolean(result.toString())) {
+				MessageLog.push("Unable to turn off Balancer", this.getClass().getSimpleName());
+			}
+
 			// Wait for balancer to stop if active
 			DBCursor balancer;
 			while (true) {
@@ -27,20 +38,41 @@ public class Resharder implements Runnable {
 				try {
 					if (!balancer.hasNext())
 						break;
-					
-					MessageLog.push("Balancer is active, polling for lock release...", this.getClass().getSimpleName());
+
+					MessageLog.push("Balancer is active, waiting for lock release...", this.getClass().getSimpleName());
 					Thread.sleep(10000);
 				} finally {
 					balancer.close();
 				}
 			}
-			
-			// Tell balancer not to run
-			Config.get_adminDB().doEval(
-					"function() {sh.setBalancerState(false); return sh.getBalancerState();}", new Object[0]);
 
-			MessageLog.push("Balancer state set to false.", this.getClass().getSimpleName());
-			
+			MessageLog.push("Balancer is inactive and disabled.", this.getClass().getSimpleName());
+
+			// Shard the target collection if reshard is true
+			if (Config.is_reshard()) {
+				result = Config.get_adminDB().command(
+						new BasicDBObject("enableSharding", Config.get_TargetNamepace().split("\\.")[0]));
+
+				if (result.getInt("ok") != 1 && !result.getString("errmsg").equals("already enabled")) {
+					MessageLog.push("Unable to enable sharding on target DB.  errmsg: " + result.getString("errmsg"),
+							this.getClass().getSimpleName());
+					return;
+				}
+
+				result = Config.get_adminDB().command(
+						new BasicDBObject("shardCollection", Config.get_TargetNamepace()).append("key",
+								new BasicDBObject(Config.get_reshardKey(), 1)));
+
+				if (result.getInt("ok") != 1 && !result.getString("errmsg").equals("already sharded")) {
+					MessageLog.push(
+							"Unable to enable sharding on target Collection.  errmsg: " + result.getString("errmsg"),
+							this.getClass().getSimpleName());
+					return;
+				}
+
+				MessageLog.push("Target collection configured for sharding.  key: " + Config.get_reshardKey(), this
+						.getClass().getSimpleName());
+			}
 
 			ShardMapper.getShardingStatus(null);
 			List<Shard> shards = ShardMapper.getShards();
@@ -52,7 +84,7 @@ public class Resharder implements Runnable {
 
 				// TODO check for secondary read and if true only read oplog
 				// from primary
-				
+
 				// Get a connection to the shard Primary
 				params = Config.get_Namepace().split("\\.");
 				DBCollection source = mongo.getDB(params[0]).getCollection(params[1]);
@@ -65,13 +97,14 @@ public class Resharder implements Runnable {
 				Chunk[] chunks = Config.get_chunks().get(key).toArray(new Chunk[0]);
 				Arrays.sort(chunks);
 				Chunk root = chunks[chunks.length / 2].load(chunks, 0, chunks.length - 1);
-				
+
 				CollectionScanner cs = new CollectionScanner(source, Config.get_readBatch(), root);
 				Launcher._tp.schedule(cs, 0, TimeUnit.MILLISECONDS);
 			}
 
 			// Start the writer thread
 			// TODO - determine if one writer per reader is needed
+
 			DocWriter dw = new DocWriter(Config.get_tgtCollection(), Config.get_writeBatch());
 			Launcher._tp.schedule(dw, 0, TimeUnit.MILLISECONDS);
 		} catch (Exception e) {
