@@ -2,16 +2,13 @@ package com.mongodb.resharder;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.LinkedList;
 import java.util.List;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 
 public final class MessageLog {
-	private static List<String> _messages = new LinkedList<String>();
 	private static long _last = new Date().getTime();
 
 	public static boolean push(String message, String sender) {

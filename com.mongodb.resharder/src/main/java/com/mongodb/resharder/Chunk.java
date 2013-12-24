@@ -2,7 +2,6 @@ package com.mongodb.resharder;
 
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.List;
 
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
@@ -101,7 +100,6 @@ public class Chunk implements Comparable<Chunk> {
 	@Override
 	public int compareTo(Chunk o) {
 		int val = 0;
-		Object min, max;
 
 		if (_min == null)
 			return -1;
