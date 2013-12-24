@@ -1,5 +1,6 @@
 package com.mongodb.resharder;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -62,6 +63,7 @@ public class Resharder implements Runnable {
 
 				String key = Config.get_Namepace() + "." + shard.getName();
 				Chunk[] chunks = Config.get_chunks().get(key).toArray(new Chunk[0]);
+				Arrays.sort(chunks);
 				Chunk root = chunks[chunks.length / 2].load(chunks, 0, chunks.length - 1);
 				
 				CollectionScanner cs = new CollectionScanner(source, Config.get_readBatch(), root);
