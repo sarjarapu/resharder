@@ -20,7 +20,7 @@ public class Conf {
 	private static int _readBatch, _writeBatch;
 	private static boolean _initialized = false;
 	private static Map<String, List<Chunk>> _chunks = new HashMap<String, List<Chunk>>();
-	private static AtomicLong _docCount, _orphanCount, _oplogCount;
+	private static AtomicLong _docCount = new AtomicLong(0), _orphanCount = new AtomicLong(0), _oplogCount = new AtomicLong(0);
 
 	public Conf(String namespace, String targetns, int readBatch, int writeBatch, boolean reshard, String key,
 			boolean secondary, String srchost, String tgthost, String loghost) throws Exception {
