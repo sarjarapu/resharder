@@ -10,6 +10,7 @@ import spark.Route;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -22,9 +23,10 @@ import freemarker.template.TemplateException;
 public class Launcher {
 	private final Configuration _cfg;
 	public static ScheduledExecutorService _tp = Executors.newScheduledThreadPool(25);
+	private long _ts = 0;
 
 	public static void main(String[] args) throws IOException {
-		Config.processArgs(args);
+		Conf.processArgs(args);
 
 		new Launcher();
 	}
@@ -82,7 +84,7 @@ public class Launcher {
 
 				if (!DocWriter.get_running()) {
 					try {
-						new Config(request.queryParams("namespace"), request.queryParams("targetns"),
+						new Conf(request.queryParams("namespace"), request.queryParams("targetns"),
 								Integer.parseInt(request.queryParams("readBatch")), Integer.parseInt(request.queryParams("writeBatch")),
 								Boolean.parseBoolean(request.queryParams("reshard")), request.queryParams("key"),
 								Boolean.parseBoolean(request.queryParams("secondary")), request.queryParams("srchost"),
@@ -101,11 +103,41 @@ public class Launcher {
 			};
 		});
 
-		get(new FreemarkerBasedRoute("/styles.css", "styles.css") {
+		get(new FreemarkerBasedRoute("/getCounters", "counters.ftl") {
 			@Override
 			protected void doHandle(Request request, Response response, Writer writer) throws IOException,
 					TemplateException {
-				template.process(new SimpleHash(), writer);
+				SimpleHash hash = new SimpleHash();
+				Map<String, Long> map = Conf.getCounters();
+				hash.put("docCount", map.get("docCount"));
+				hash.put("orphanCount", map.get("orphanCount"));
+				hash.put("oplogCount", map.get("oplogCount"));
+				
+				if (_ts > 0) {
+					long secs = ((System.currentTimeMillis() - _ts) / 1000);
+					if (secs == 0) {
+						secs = 1;
+					}
+					
+					if (DocWriter.get_running()) {
+						hash.put("docsPerSec", map.get("docCount") / secs);
+						hash.put("orphansPerSec", map.get("orphanCount") / secs);
+					} else {
+						hash.put("docsPerSec", 0);
+						hash.put("orphansPerSec", 0);
+					}
+					
+					hash.put("oplogsPerSec", map.get("oplogCount") / secs);
+					
+				} else {
+					hash.put("docsPerSec", 0);
+					hash.put("orphansPerSec", 0);
+					hash.put("oplogsPerSec", 0);
+					
+					_ts = System.currentTimeMillis();
+				}
+				
+				template.process(hash, writer);
 
 			}
 
@@ -158,7 +190,10 @@ public class Launcher {
 			public void doHandle(Request request, Response response, Writer writer) throws IOException,
 					TemplateException {
 				SimpleHash root = new SimpleHash();
-
+				_ts = 0;
+				if (OpLogReader.isRunning()) {
+					OpLogReader.shutdown();
+				}
 				template.process(ShardMapper.getShardingStatus(root), writer);
 			}
 		});

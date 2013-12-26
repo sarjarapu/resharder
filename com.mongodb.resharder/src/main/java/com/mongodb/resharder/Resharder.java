@@ -15,7 +15,7 @@ public class Resharder implements Runnable {
 	private String[] params;
 
 	public Resharder() {
-		params = Config.get_TargetNamepace().split("\\.");
+		params = Conf.get_TargetNamepace().split("\\.");
 	}
 
 	public void run() {
@@ -23,7 +23,7 @@ public class Resharder implements Runnable {
 			CommandResult result;
 
 			// Tell balancer not to run
-			result = Config.get_adminDB().doEval(
+			result = Conf.get_adminDB().doEval(
 					"function() {sh.setBalancerState(false); return sh.getBalancerState();}", new Object[0]);
 
 			if (Boolean.parseBoolean(result.toString())) {
@@ -33,7 +33,7 @@ public class Resharder implements Runnable {
 			// Wait for balancer to stop if active
 			DBCursor balancer;
 			while (true) {
-				balancer = Config.get_configDB().getCollection("locks")
+				balancer = Conf.get_configDB().getCollection("locks")
 						.find(new BasicDBObject("_id", "balancer").append("state", "2")).limit(1);
 				try {
 					if (!balancer.hasNext())
@@ -49,9 +49,9 @@ public class Resharder implements Runnable {
 			MessageLog.push("Balancer is inactive and disabled.", this.getClass().getSimpleName());
 
 			// Shard the target collection if reshard is true
-			if (Config.is_reshard()) {
-				result = Config.get_adminDB().command(
-						new BasicDBObject("enableSharding", Config.get_TargetNamepace().split("\\.")[0]));
+			if (Conf.is_reshard()) {
+				result = Conf.get_adminDB().command(
+						new BasicDBObject("enableSharding", Conf.get_TargetNamepace().split("\\.")[0]));
 
 				if (result.getInt("ok") != 1 && !result.getString("errmsg").equals("already enabled")) {
 					MessageLog.push("Unable to enable sharding on target DB.  errmsg: " + result.getString("errmsg"),
@@ -59,9 +59,9 @@ public class Resharder implements Runnable {
 					return;
 				}
 
-				result = Config.get_adminDB().command(
-						new BasicDBObject("shardCollection", Config.get_TargetNamepace()).append("key",
-								new BasicDBObject(Config.get_reshardKey(), 1)));
+				result = Conf.get_adminDB().command(
+						new BasicDBObject("shardCollection", Conf.get_TargetNamepace()).append("key",
+								new BasicDBObject(Conf.get_reshardKey(), 1)));
 
 				if (result.getInt("ok") != 1 && !result.getString("errmsg").equals("already sharded")) {
 					MessageLog.push(
@@ -70,7 +70,7 @@ public class Resharder implements Runnable {
 					return;
 				}
 
-				MessageLog.push("Target collection configured for sharding.  key: " + Config.get_reshardKey(), this
+				MessageLog.push("Target collection configured for sharding.  key: " + Conf.get_reshardKey(), this
 						.getClass().getSimpleName());
 			}
 
@@ -86,15 +86,15 @@ public class Resharder implements Runnable {
 				// from primary
 
 				// Get a connection to the shard Primary
-				params = Config.get_Namepace().split("\\.");
+				params = Conf.get_Namepace().split("\\.");
 				DBCollection source = mongo.getDB(params[0]).getCollection(params[1]);
 				DBCollection oplog = mongo.getDB("local").getCollection("oplog.rs");
 
 				OpLogReader olr = new OpLogReader(oplog);
 				Launcher._tp.schedule(olr, 0, TimeUnit.MILLISECONDS);
 
-				String key = Config.get_Namepace() + "." + shard.getName();
-				Chunk[] chunks = Config.get_chunks().get(key).toArray(new Chunk[0]);
+				String key = Conf.get_Namepace() + "." + shard.getName();
+				Chunk[] chunks = Conf.get_chunks().get(key).toArray(new Chunk[0]);
 				Arrays.sort(chunks);
 				Chunk root = chunks[chunks.length / 2].load(chunks, 0, chunks.length - 1);
 
@@ -106,7 +106,7 @@ public class Resharder implements Runnable {
 			// TODO - determine if one writer per reader is needed
 
 			DocWriter dw = new DocWriter();
-			Launcher._tp.schedule(dw, 0, TimeUnit.MILLISECONDS);
+			Launcher._tp.schedule(dw, 1, TimeUnit.SECONDS);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

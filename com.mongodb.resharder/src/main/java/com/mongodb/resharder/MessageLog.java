@@ -18,7 +18,7 @@ public final class MessageLog {
 		doc.put("sender", sender);
 		doc.put("message", message);
 
-		Config.get_log().insert(doc);
+		Conf.get_log().insert(doc);
 
 		return true;
 	}
@@ -26,8 +26,8 @@ public final class MessageLog {
 	public static String[] getRecentMessages() {
 		List<String> messages = new ArrayList<String>();
 
-		if (Config.isInitialized()) {
-			DBCursor cursor = Config.get_log().find(new BasicDBObject("ts", new BasicDBObject("$gt", _last)))
+		if (Conf.isInitialized()) {
+			DBCursor cursor = Conf.get_log().find(new BasicDBObject("ts", new BasicDBObject("$gt", _last)))
 					.sort(new BasicDBObject("ts", 1));
 
 			while (cursor.hasNext()) {

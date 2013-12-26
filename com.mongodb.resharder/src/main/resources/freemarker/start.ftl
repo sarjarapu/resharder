@@ -176,7 +176,7 @@ Collection<br>
               <td><input style="width: 25px;" id="frmReadBatch" name="readBatch" value="100"><br>
               </td><td style="vertical-align: middle; text-align: right;">Reshard<br>
               </td>
-              <td style="vertical-align: top;"><input id="frmReshard" name="frmReshard" type="checkbox" value="true"><br>
+              <td style="vertical-align: top;"><input id="frmReshard" name="frmReshard" type="checkbox" value="false"><br>
               </td>
 
             </tr>

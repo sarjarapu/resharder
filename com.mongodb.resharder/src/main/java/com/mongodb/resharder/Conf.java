@@ -11,7 +11,7 @@ import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 
-public class Config {
+public class Conf {
 	private static String _ns, _targetns, _reshardKey;
 	private static DBCollection _src, _tgt, _log, _oplog;
 	private static DB _adminDB, _configDB, _logDB;
@@ -19,9 +19,9 @@ public class Config {
 	private static int _readBatch, _writeBatch;
 	private static boolean _initialized = false;
 	private static Map<String, List<Chunk>> _chunks = new HashMap<String, List<Chunk>>();
-	private static long _docCount, _orphanCount, _oplogCount; 
+	private static long _docCount, _orphanCount, _oplogCount;
 
-	public Config(String namespace, String targetns, int readBatch, int writeBatch, boolean reshard, String key,
+	public Conf(String namespace, String targetns, int readBatch, int writeBatch, boolean reshard, String key,
 			boolean secondary, String srchost, String tgthost, String loghost) throws Exception {
 		
 		// TODO - check if a clone is in process and prompt to kill it
@@ -66,14 +66,24 @@ public class Config {
 		
 		_initialized = true;
 	}
+	
+	public static Map<String, Long> getCounters() {
+		Map<String, Long> map = new HashMap<String, Long>();
+		
+		map.put("docCount", new Long(_docCount));
+		map.put("orphanCount", new Long(_orphanCount));
+		map.put("oplogCount", new Long(_oplogCount));
+		
+		return map;
+	}
 
 	public static void oplogWrite(DBObject doc) throws Exception {
-		if (Config.get_oplog() != null) {
-			Config.get_oplog().insert(doc);
+		if (Conf.get_oplog() != null) {
+			Conf.get_oplog().insert(doc);
 		} else {
 			throw new Exception("Unable to write oplog data, no collection has been set for output.");
 		}
-		Config._oplogCount++;
+		Conf._oplogCount++;
 	}
 
 	public static void docWrite(List<DBObject> docs) {
@@ -83,7 +93,7 @@ public class Config {
 			_tgt.insert(docs.toArray(new DBObject[0]));
 		}
 		
-		Config._docCount += docs.size();
+		Conf._docCount += docs.size();
 	}
 
 	public static void processArgs(String[] args) throws UnknownHostException {
@@ -197,7 +207,7 @@ public class Config {
 	}
 
 	public static void orphanDropped() {
-		Config._orphanCount++;
+		Conf._orphanCount++;
 	}
 
 	public static long get_docCount() {

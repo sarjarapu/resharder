@@ -1,8 +1,18 @@
-
 var auto_refresh = setInterval(function (){
-		$('.messageLog').load('/getStatus', function(data){document.getElementById("term").innerHTML += data});
-		$('.counterClass').load('/getCounters', function(data){document.getElementById("monitor").innerHTML = data});
+	    if ($('#term').length > 0) {
+	    	$('.messageLog').load('/getStatus', function(data){document.getElementById("term").innerHTML += data});
+	    	$('.counterClass').load('/getCounters', function(data){document.getElementById("monitor").innerHTML = data});
+		}
 	}, 1000); // refresh every second
+
+$('#frmReshard').click(function() { 
+    if(this.checked) {
+        $("#frmReshard").val("true");
+    } 
+    else{
+        $("#frmReshard").val("false");
+    }
+   });
 
 $(function() {
 	$(".button").click(
@@ -40,7 +50,8 @@ $(function() {
 						$('#term').html(
 								"Resharding initiated for " + ns + "...<br>");
 					}
-				});
+				}
+				);
 				return false;
 			});
 });

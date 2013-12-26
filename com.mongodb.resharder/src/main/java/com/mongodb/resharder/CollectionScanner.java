@@ -27,12 +27,15 @@ public class CollectionScanner implements Runnable {
 
 		// use the same socket for all reads
 		try {
+			_shutdown.set(false);
+			
 			_source.getDB().requestStart();
 			_source.getDB().requestEnsureConnection();
+			
 			MessageLog.push("connected to " + _source.getDB().getMongo().getConnectPoint() + ".", this.getClass().getSimpleName());
 
 			while (_running && !_shutdown.get()) {
-				DBCursor cursor = _source.find().sort(new BasicDBObject("$natural", 1)).skip(_numread).limit(Config.get_readBatch());
+				DBCursor cursor = _source.find().sort(new BasicDBObject("$natural", 1)).skip(_numread).limit(Conf.get_readBatch());
 
 				if (!cursor.hasNext()) {
 					MessageLog.push("Collection scan completed...", this.getClass().getSimpleName());
@@ -50,7 +53,7 @@ public class CollectionScanner implements Runnable {
 							DocWriter.push(doc);
 						} else {
 							MessageLog.push("Orphan found. ShardKey: " + doc.get(_chunkTree.get_shardkey()) + " Shard: " + _chunkTree.get_shard(), this.getClass().getSimpleName());
-							Config.orphanDropped();
+							Conf.orphanDropped();
 						}
 						_numread++;
 					}
@@ -66,6 +69,7 @@ public class CollectionScanner implements Runnable {
 		} finally {
 			_source.getDB().requestDone();
 			MessageLog.push("disconnected from " + _source.getDB().getMongo().getConnectPoint() + ".", this.getClass().getSimpleName());
+			_shutdown.set(false);
 		}
 	}
 

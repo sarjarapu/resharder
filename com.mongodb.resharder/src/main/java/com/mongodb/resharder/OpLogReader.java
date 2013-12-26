@@ -20,27 +20,30 @@ public class OpLogReader implements Runnable {
 		_running.set(true);
 	}
 
-	public static boolean get_running() {
+	public static boolean isRunning() {
 		return _running.get();
 	}
 
-	public static void set_running(boolean running) {
-		_running.set(running);
+	public static void shutdown() {
+		_running.set(false);
 	}
 
 	public void run() {
 		try {
+			_running.set(true);
+			
 			while (_running.get()) {
 				_oplog.getDB().requestStart();
 				_oplog.getDB().requestEnsureConnection();
 				MessageLog.push("connected to " + _oplog.getDB().getMongo().getConnectPoint() + ".", this.getClass().getSimpleName());
 				
 				// TODO - What happens when multiple threads call this concurrently on the same client?
-				Config.get_oplog().getDB().requestStart();
-				Config.get_oplog().getDB().requestEnsureConnection();
-				MessageLog.push("outputting to " + Config.get_oplog().getDB().getMongo().getConnectPoint() + ".", this.getClass().getSimpleName());
+				Conf.get_oplog().getDB().requestStart();
+				Conf.get_oplog().getDB().requestEnsureConnection();
+				MessageLog.push("outputting to " + Conf.get_oplog().getDB().getMongo().getConnectPoint() + ".", this.getClass().getSimpleName());
 
 				DBCursor cursor = _oplog.find(new BasicDBObject("ns","test.grades")).sort(new BasicDBObject("$natural", -1)).limit(1);
+				
 				if (cursor.hasNext()) {
 					DBObject doc = cursor.next();
 					_ts = (BSONTimestamp) doc.get("ts");
@@ -49,13 +52,13 @@ public class OpLogReader implements Runnable {
 				}
 				
 
-				BasicDBObject query = new BasicDBObject("ts", new BasicDBObject("$gt", _ts)).append("ns", Config.get_Namepace());
+				BasicDBObject query = new BasicDBObject("ts", new BasicDBObject("$gt", _ts)).append("ns", Conf.get_Namepace());
 				cursor = _oplog.find(query).sort(new BasicDBObject("$natural", 1)).addOption(Bytes.QUERYOPTION_TAILABLE)
 						.addOption(Bytes.QUERYOPTION_AWAITDATA);
 
 				try {
 					while (cursor.hasNext() && _running.get()) {
-						Config.oplogWrite(cursor.next());
+						Conf.oplogWrite(cursor.next());
 					}
 				} finally {
 					try {
@@ -65,7 +68,7 @@ public class OpLogReader implements Runnable {
 					}
 					MessageLog.push("disconnected from " + _oplog.getDB().getMongo().getConnectPoint() + ".", this.getClass().getSimpleName());
 					_oplog.getDB().requestDone();
-					Config.get_oplog().getDB().requestDone();
+					Conf.get_oplog().getDB().requestDone();
 				}
 
 				try {
