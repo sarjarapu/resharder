@@ -4,6 +4,7 @@ import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
@@ -19,7 +20,7 @@ public class Conf {
 	private static int _readBatch, _writeBatch;
 	private static boolean _initialized = false;
 	private static Map<String, List<Chunk>> _chunks = new HashMap<String, List<Chunk>>();
-	private static long _docCount, _orphanCount, _oplogCount;
+	private static AtomicLong _docCount, _orphanCount, _oplogCount;
 
 	public Conf(String namespace, String targetns, int readBatch, int writeBatch, boolean reshard, String key,
 			boolean secondary, String srchost, String tgthost, String loghost) throws Exception {
@@ -60,9 +61,9 @@ public class Conf {
 		
 		_chunks = new HashMap<String, List<Chunk>>();
 		
-		_docCount = 0;
-		_orphanCount = 0;
-		_oplogCount = 0;
+		_docCount.set(0);
+		_orphanCount.set(0);
+		_oplogCount.set(0);
 		
 		_initialized = true;
 	}
@@ -70,9 +71,9 @@ public class Conf {
 	public static Map<String, Long> getCounters() {
 		Map<String, Long> map = new HashMap<String, Long>();
 		
-		map.put("docCount", new Long(_docCount));
-		map.put("orphanCount", new Long(_orphanCount));
-		map.put("oplogCount", new Long(_oplogCount));
+		map.put("docCount", new Long(_docCount.get()));
+		map.put("orphanCount", new Long(_orphanCount.get()));
+		map.put("oplogCount", new Long(_oplogCount.get()));
 		
 		return map;
 	}
@@ -83,7 +84,7 @@ public class Conf {
 		} else {
 			throw new Exception("Unable to write oplog data, no collection has been set for output.");
 		}
-		Conf._oplogCount++;
+		Conf._oplogCount.incrementAndGet();
 	}
 
 	public static void docWrite(List<DBObject> docs) {
@@ -93,7 +94,7 @@ public class Conf {
 			_tgt.insert(docs.toArray(new DBObject[0]));
 		}
 		
-		Conf._docCount += docs.size();
+		Conf._docCount.addAndGet(docs.size());
 	}
 
 	public static void processArgs(String[] args) throws UnknownHostException {
@@ -203,18 +204,10 @@ public class Conf {
 	}
 
 	public static long get_orphans() {
-		return _orphanCount;
+		return _orphanCount.get();
 	}
 
 	public static void orphanDropped() {
-		Conf._orphanCount++;
-	}
-
-	public static long get_docCount() {
-		return _docCount;
-	}
-
-	public static long get_oplogCount() {
-		return _oplogCount;
+		Conf._orphanCount.incrementAndGet();
 	}
 }
