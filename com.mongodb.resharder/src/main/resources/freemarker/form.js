@@ -33,8 +33,6 @@ $(function() {
 						+ writeBatch + "&srchost=" + srchost + "&tgthost="
 						+ tgthost + "&loghost=" + loghost + "&reshard="
 						+ reshard + "&key=" + key;
-				
-				alert(dataString);
 
 				$.ajax({
 					type : "GET",
