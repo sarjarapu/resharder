@@ -143,6 +143,19 @@ public class Launcher {
 
 		});
 
+		get(new FreemarkerBasedRoute("/getChartData", "counterVals.ftl") {
+			@Override
+			protected void doHandle(Request request, Response response, Writer writer) throws IOException,
+					TemplateException {
+				SimpleHash hash = new SimpleHash();
+				
+				hash.put("data", PerfCounters.getRateCounters());
+				
+				template.process(hash, writer);
+			}
+
+		});
+
 		get(new FreemarkerBasedRoute("/form.js", "form.js") {
 			@Override
 			protected void doHandle(Request request, Response response, Writer writer) throws IOException,
@@ -190,6 +203,10 @@ public class Launcher {
 			public void doHandle(Request request, Response response, Writer writer) throws IOException,
 					TemplateException {
 				SimpleHash root = new SimpleHash();
+				
+				// set initial perf counter values
+				root.put("data", PerfCounters.getRateCounters());
+				
 				_ts = 0;
 				if (OpLogReader.isRunning()) {
 					OpLogReader.shutdown();

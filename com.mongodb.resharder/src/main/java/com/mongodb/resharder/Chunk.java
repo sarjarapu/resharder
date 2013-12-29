@@ -32,7 +32,8 @@ public class Chunk implements Comparable<Chunk> {
 		}
 	}
 
-	public boolean isOrphan(Object pKey) {
+	public boolean isOrphan(Object pKey) throws Exception {
+		try {
 		if (pKey instanceof String) {
 			// TODO this needs some debugging
 			if (_min.toString().compareTo(pKey.toString()) <= 0 && _max.toString().compareTo(pKey.toString()) >= 0)
@@ -44,40 +45,57 @@ public class Chunk implements Comparable<Chunk> {
 			if (_max.toString().compareTo(pKey.toString()) < 0 && _right != null)
 				return _right.isOrphan(pKey);
 		} else if (pKey instanceof Integer) {
-			Integer min = (Integer) _min, max = (Integer) _max, key = (Integer) pKey;
-
+			Integer key = (Integer) pKey;
+			
+			if (_min == null && _max == null)
+				return false;
+			
+			Integer min = (Integer) _min;
+			
+			if (_max == null && min.compareTo(key) > 0)
+				return true;
+			
 			if (_max == null && min.compareTo(key) <= 0)
 				return false;
-			else if (_min == null && max.compareTo(key) >= 0)
+			
+			Integer max = (Integer) _max;
+			
+			if (_min == null && max.compareTo(key) < 0)
+				return true;
+			
+			if (_min == null && max.compareTo(key) >= 0)
 				return false;
-			else if (min.compareTo(key) <= 0 && max.compareTo(key) >= 0)
-				return false;
-
-			if (min.compareTo(key) > 0 && _left != null)
-				return _left.isOrphan(pKey);
-
-			if (max.compareTo(key) < 0 && _right != null)
-				return _right.isOrphan(pKey);
-		} else if (pKey instanceof Long) {
-			Long min = (Long) _min, max = (Long) _max, key = (Long) pKey;
-
-			if (_max == null) {
-				if (min.compareTo(key) <= 0)
-					return false;
-			} else if (_min == null) {
-				if (max.compareTo(key) >= 0)
-					return false;
-			} else if (min.compareTo(key) <= 0 && max.compareTo(key) >= 0)
-				return false;
-
+			
 			if (min.compareTo(key) <= 0 && max.compareTo(key) >= 0)
 				return false;
-
-			if (min.compareTo(key) > 0 && _left != null)
-				return _left.isOrphan(pKey);
-
-			if (max.compareTo(key) < 0 && _right != null)
-				return _right.isOrphan(pKey);
+		} else if (pKey instanceof Long) {
+			Long key = (Long) pKey;
+			
+			if (_min == null && _max == null)
+				return false;
+			
+			Long min = (Long) _min;
+			
+			if (_max == null && min.compareTo(key) >= 0)
+				return true;
+			
+			if (_max == null && min.compareTo(key) <= 0)
+				return false;
+			
+			Long max = (Long) _max;
+			
+			if (_min == null && max.compareTo(key) < 0)
+				return true;
+			
+			if (_min == null && max.compareTo(key) >= 0)
+				return false;
+			
+			if (min.compareTo(key) <= 0 && max.compareTo(key) >= 0)
+				return false;
+		}
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new Exception(e.getMessage());
 		}
 
 		return true;

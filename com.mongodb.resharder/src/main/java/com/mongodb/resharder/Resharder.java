@@ -76,6 +76,9 @@ public class Resharder implements Runnable {
 
 			ShardMapper.getShardingStatus(null);
 			List<Shard> shards = ShardMapper.getShards();
+			
+			// Start the rate monitor
+			Launcher._tp.schedule(new PerfCounters(), 0, TimeUnit.MILLISECONDS);
 
 			// Start a reader for each shard
 			MessageLog.push("Processing shard config...", "Launcher");

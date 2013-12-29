@@ -6,22 +6,7 @@
 
 <meta content="text/html; charset=ISO-8859-1" http-equiv="content-type"><title>MongoDB Resharder</title>
   
-  <script type="text/javascript">
-if (window.addEventListener) { // Mozilla, Netscape, Firefox
-    window.addEventListener('load', WindowLoad, false);
-} else if (window.attachEvent) { // IE
-    window.attachEvent('onload', WindowLoad);
-}
 
-function WindowLoad(event) {
-    	var json = document.getElementById("json").innerHTML;
-    	json = JSON.parse(json);
-	document.getElementById("json").innerHTML = JSON.stringify(json,null,2);
-
-	json = {"mongos":"${mongos}","shards":"${numShards}","replSets":"${numRepl}","servers":"${numServers}"};
-	document.getElementById("config").innerHTML = JSON.stringify(json,null,2);
-}
-  </script>
   
   <link rel="stylesheet" type="text/css" href="/styles.css">
   
@@ -43,6 +28,7 @@ function WindowLoad(event) {
 
 <div id="messages" class="messageLog" style="display: none;" ;=""></div>
 <div id="counters" class="counterClass" style="display: none;" ;=""></div>
+<div id="counterVals" class="counterVals" style="display: none;" ;="">${data}</div>
 <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js?lang=css&amp;skin=sunburst">
 </script>
 
@@ -176,7 +162,7 @@ Collection<br>
               <td><input style="width: 25px;" id="frmReadBatch" name="readBatch" value="100"><br>
               </td><td style="vertical-align: middle; text-align: right;">Reshard<br>
               </td>
-              <td style="vertical-align: top;"><input id="frmReshard" name="frmReshard" type="checkbox" value="false"><br>
+              <td style="vertical-align: top;"><input id="frmReshard" name="frmReshard" class="frmReshard" type="checkbox" value="false"><br>
               </td>
 
             </tr>
@@ -231,5 +217,31 @@ Collection<br>
 <br>
 
 <br>
+  <script type="text/javascript">
+if (window.addEventListener) { // Mozilla, Netscape, Firefox
+    window.addEventListener('load', WindowLoad, false);
+} else if (window.attachEvent) { // IE
+    window.attachEvent('onload', WindowLoad);
+}
 
+function WindowLoad(event) {
+    	var json = document.getElementById("json").innerHTML;
+    	json = JSON.parse(json);
+	document.getElementById("json").innerHTML = JSON.stringify(json,null,2);
+
+	json = {"mongos":"${mongos}","shards":"${numShards}","replSets":"${numRepl}","servers":"${numServers}"};
+	document.getElementById("config").innerHTML = JSON.stringify(json,null,2);
+	
+	$('#frmReshard').click(
+					function() {
+						if (this.checked) {
+							$("#frmReshard").val("true");
+						} else {
+							$("#frmReshard").val("false");
+						}
+					});
+}
+  </script>
+  <script src="http://code.highcharts.com/highcharts.js"></script>
+<script src="http://code.highcharts.com/modules/exporting.js"></script>
 </body></html>
