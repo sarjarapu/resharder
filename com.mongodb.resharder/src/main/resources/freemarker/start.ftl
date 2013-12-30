@@ -4,6 +4,7 @@
 
 
 
+
 <meta content="text/html; charset=ISO-8859-1" http-equiv="content-type"><title>MongoDB Resharder</title>
   
 
@@ -122,7 +123,7 @@ Collection<br>
               </td>
             </tr>
             <tr>
-              <td colspan="1" rowspan="7" style="vertical-align: top;">
+              <td colspan="1" rowspan="8" style="vertical-align: top;">
               <#list collList as coll>
               
               <p><input name="namespace" id="frmNamespace" value="${coll}" type="radio">${coll}
@@ -162,7 +163,7 @@ Collection<br>
               <td><input style="width: 25px;" id="frmReadBatch" name="readBatch" value="100"><br>
               </td><td style="vertical-align: middle; text-align: right;">Reshard<br>
               </td>
-              <td style="vertical-align: top;"><input id="frmReshard" name="frmReshard" class="frmReshard" type="checkbox" value="false"><br>
+              <td style="vertical-align: top;"><input id="frmReshard" name="frmReshard" class="frmReshard" value="false" type="checkbox"><br>
               </td>
 
             </tr>
@@ -177,6 +178,13 @@ Collection<br>
 
             </tr>
             <tr>
+              <td style="vertical-align: top;"><br>
+              </td>
+              <td colspan="2" rowspan="1" style="vertical-align: middle; text-align: right;">Read Secondary<br>
+              </td>
+              <td style="vertical-align: top;"><input id="cbxSecondary" name="cbxSecondary" type="checkbox"></td>
+            </tr>
+<tr>
               <td colspan="5" rowspan="1"><button type="submit" name="submit" class="button" id="submit_btn" value="Submit">Reshard</button><br>
               </td>
             </tr>
@@ -238,6 +246,15 @@ function WindowLoad(event) {
 							$("#frmReshard").val("true");
 						} else {
 							$("#frmReshard").val("false");
+						}
+					});
+					
+	$('#cbxSecondary').click(
+					function() {
+						if (this.checked) {
+							$("#cbxSecondary").val("true");
+						} else {
+							$("#cbxSecondary").val("false");
 						}
 					});
 }

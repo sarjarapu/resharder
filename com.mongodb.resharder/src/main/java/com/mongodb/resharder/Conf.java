@@ -91,10 +91,15 @@ public class Conf {
 		if (docs.size() > 0) {
 			// TODO - should there be a stronger write concern on this op than
 			// default?
+			
+//			for (DBObject doc : docs) {
+//				_tgt.save(doc);
+//			}
+			
 			_tgt.insert(docs.toArray(new DBObject[0]));
+			
+			Conf._docCount.addAndGet(docs.size());
 		}
-		
-		Conf._docCount.addAndGet(docs.size());
 	}
 
 	public static void processArgs(String[] args) throws UnknownHostException {

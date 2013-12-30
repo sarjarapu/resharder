@@ -19,6 +19,10 @@ public class OpLogReader implements Runnable {
 		this._oplog = oplog;
 		_running.set(true);
 	}
+	
+	public void setTimestamp(BSONTimestamp ts) {
+		this._ts = ts;
+	}
 
 	public static boolean isRunning() {
 		return _running.get();
@@ -54,7 +58,8 @@ public class OpLogReader implements Runnable {
 					DBObject doc = cursor.next();
 					_ts = (BSONTimestamp) doc.get("ts");
 				} else {
-					_ts = new BSONTimestamp();
+					if (_ts == null)
+						_ts = new BSONTimestamp();
 				}
 
 				BasicDBObject query = new BasicDBObject("ts", new BasicDBObject("$gt", _ts)).append("ns",

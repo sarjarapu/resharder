@@ -27,6 +27,7 @@ $(function() {
 						var loghost = $("input#frmLog").val();
 						var reshard = $("input#frmReshard").val();
 						var key = $("input#frmKey").val();
+						var secondary = $("input#cbxSecondary").val();
 
 						$('#formDiv')
 								.html(
@@ -39,7 +40,9 @@ $(function() {
 								+ "&writeBatch=" + writeBatch + "&srchost="
 								+ srchost + "&tgthost=" + tgthost + "&loghost="
 								+ loghost + "&reshard=" + reshard + "&key="
-								+ key;
+								+ key + "&secondary=" + secondary;
+						
+						alert(dataString)
 
 						$.ajax({
 							type : "GET",
