@@ -1,7 +1,8 @@
 var auto_refresh = setInterval(function() {
 	if ($('#term').length > 0) {
 		$('.messageLog').load('/getStatus', function(data) {
-			document.getElementById("term").innerHTML += data
+			if (data.localeCompare("undefined") != 0)
+				document.getElementById("term").innerHTML += data
 		});
 		$('.counterClass').load('/getCounters', function(data) {
 			document.getElementById("monitor").innerHTML = data
@@ -41,18 +42,11 @@ $(function() {
 								+ srchost + "&tgthost=" + tgthost + "&loghost="
 								+ loghost + "&reshard=" + reshard + "&key="
 								+ key + "&secondary=" + secondary;
-						
-						alert(dataString)
 
 						$.ajax({
 							type : "GET",
 							url : "/reshard",
 							data : dataString,
-							// data: { "namespace": ns, "targetns":
-							// targetns,
-							// "readBatch": readBatch, "writeBatch":
-							// writeBatch, "host":
-							// host },
 							success : function() {
 								$('#term').html(
 										"Resharding initiated for " + ns
@@ -72,11 +66,8 @@ $(function() {
 										{
 											chart : {
 												type : 'spline',
-												animation : Highcharts.svg, // don't
-												// animate
-												// in
-												// old
-												// IE
+												// don't animate in old IE
+												animation : Highcharts.svg, 
 												marginRight : 10,
 												events : {
 													load : function() {

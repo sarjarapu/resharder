@@ -21,6 +21,7 @@ public class Conf {
 	private static boolean _initialized = false;
 	private static Map<String, List<Chunk>> _chunks = new HashMap<String, List<Chunk>>();
 	private static AtomicLong _docCount = new AtomicLong(0), _orphanCount = new AtomicLong(0), _oplogCount = new AtomicLong(0);
+	private static MongoClientURI _srcURI, _tgtURI, _logURI;
 
 	public Conf(String namespace, String targetns, int readBatch, int writeBatch, boolean reshard, String key,
 			boolean secondary, String srchost, String tgthost, String loghost) throws Exception {
@@ -31,25 +32,8 @@ public class Conf {
 			MessageLog.push("ERROR:, clone operation in progress.", this.getClass().getSimpleName());
 			throw new Exception("ERROR:, clone operation in progress.");
 		}
-		
-		MongoClient srcClient = new MongoClient(new MongoClientURI("mongodb://" + srchost));
-		MongoClient tgtClient = new MongoClient(new MongoClientURI("mongodb://" + tgthost));
-		MongoClient logClient = new MongoClient(new MongoClientURI("mongodb://" + loghost));
 
-		_adminDB = srcClient.getDB("admin");
-		_configDB = srcClient.getDB("config");
-		_logDB = logClient.getDB("resharder");
-		
-		// TODO setup config if shard on copy selected.
 		_targetns = targetns;
-		String[] params = _targetns.split("\\.");
-		_tgt = tgtClient.getDB(params[0]).getCollection(params[1]);
-		_tgt.drop();
-
-		_log = _logDB.getCollection("log");
-		_oplog = _logDB.getCollection("oplog_out");
-		_log.drop();
-		_oplog.drop();
 
 		_reshard = reshard;
 		_reshardKey = key;
@@ -59,13 +43,38 @@ public class Conf {
 		_writeBatch = writeBatch;
 		_secondary = secondary;
 		
+		_srcURI = new MongoClientURI("mongodb://" + srchost);
+		_tgtURI = new MongoClientURI("mongodb://" + tgthost);
+		_logURI = new MongoClientURI("mongodb://" + loghost);
+		
+		init();
+	}
+	
+	public static void init() throws UnknownHostException {
+		MongoClient srcClient = new MongoClient(_srcURI);
+		MongoClient tgtClient = new MongoClient(_tgtURI);
+		MongoClient logClient = new MongoClient(_logURI);
+
+		_adminDB = srcClient.getDB("admin");
+		_configDB = srcClient.getDB("config");
+		_logDB = logClient.getDB("resharder");
+		
+		String[] params = _targetns.split("\\.");
+		_tgt = tgtClient.getDB(params[0]).getCollection(params[1]);
+		_tgt.drop();
+
+		_log = _logDB.getCollection("log");
+		_oplog = _logDB.getCollection("oplog_out");
+		_log.drop();
+		_oplog.drop();
+		
 		_chunks = new HashMap<String, List<Chunk>>();
 		
 		_docCount.set(0);
 		_orphanCount.set(0);
 		_oplogCount.set(0);
 		
-		_initialized = true;
+		_initialized = true;	
 	}
 	
 	public static Map<String, Long> getCounters() {
@@ -87,14 +96,16 @@ public class Conf {
 		Conf._oplogCount.incrementAndGet();
 	}
 
-	public static void docWrite(List<DBObject> docs) {
+	public static void docWrite(List<DBObject> docs) throws UnknownHostException {
 		if (docs.size() > 0) {
-			// TODO - should there be a stronger write concern on this op than
-			// default?
-			
 //			for (DBObject doc : docs) {
 //				_tgt.save(doc);
 //			}
+			
+			if (_docCount.get() == 0) {
+				String[] params = _targetns.split("\\.");
+				_tgt = new MongoClient(_tgtURI).getDB(params[0]).getCollection(params[1]);
+			}
 			
 			_tgt.insert(docs.toArray(new DBObject[0]));
 			
