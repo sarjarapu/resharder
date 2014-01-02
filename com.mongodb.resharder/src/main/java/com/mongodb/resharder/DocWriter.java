@@ -2,15 +2,26 @@ package com.mongodb.resharder;
 
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
 
 import com.mongodb.DBObject;
 
 public class DocWriter implements Runnable {
 	private final static Queue<DBObject> _queue = new ConcurrentLinkedQueue<DBObject>();
-	
+
 	private static AtomicBoolean _running = new AtomicBoolean(false);
+	private static AtomicInteger _readers = new AtomicInteger(0);
+	
+	public static void readerStarted() {
+		_readers.incrementAndGet();
+	}
+	
+	public static void readerStopped() {
+		_readers.decrementAndGet();
+	}
 
 	public static boolean get_running() {
 		return _running.get();
@@ -24,16 +35,18 @@ public class DocWriter implements Runnable {
 
 	public void run() {
 		_running.set(true);
-		
+
 		try {
 			Stack<DBObject> buffer = new Stack<DBObject>();
 
 			// use the same socket for all writes
-			// TODO - determine if we need multiple writers to the same collection object
-			Conf.get_tgtCollection().getDB().requestStart();
-			Conf.get_tgtCollection().getDB().requestEnsureConnection();
-			
-			MessageLog.push("connected to " + Conf.get_tgtCollection().getDB().getMongo().getConnectPoint(), this.getClass().getSimpleName() + ".");
+			// TODO - determine if we need multiple writers to the same
+			// collection object
+			Config.get_tgtCollection().getDB().requestStart();
+			Config.get_tgtCollection().getDB().requestEnsureConnection();
+
+			MessageLog.push("connected to " + Config.get_tgtCollection().getDB().getMongo().getConnectPoint(), this
+					.getClass().getSimpleName() + ".");
 
 			while (_running.get()) {
 				while (!_queue.isEmpty()) {
@@ -41,27 +54,32 @@ public class DocWriter implements Runnable {
 					// Grab docs of the queue until the buffer is full
 					buffer.push(_queue.poll());
 
-					if (buffer.size() == Conf.get_writeBatch()) {
+					if (buffer.size() == Config.get_writeBatch()) {
 						// Write the docs to the clone Collection and clear the
 						// buffer
 						// TODO - is there an exception that might need to be
 						// handled here?
-						Conf.docWrite(buffer);
+						Config.docWrite(buffer);
 						buffer.clear();
 					}
 				}
 
 				try {
-					if (++_stopCount > 10) {
-						MessageLog.push("Timeout waiting for docs. Shutting down...", this.getClass().getSimpleName());
-						Conf.docWrite(buffer);
+					if (_readers.get() == 0) {
+						// start replaying the oplog
+						MessageLog.push("All readers finshed, commencing Oplog replay...", this.getClass().getSimpleName());
+						Config.docWrite(buffer);
 						buffer.clear();
-						shutdown();
+						
+						Launcher._tp.schedule(new OpLogWriter(), 0, TimeUnit.MILLISECONDS);
+						
+						break;
+					} else {
+						// Wait for more docs
+						Thread.sleep(100);
 					}
-					// Wait for more docs
-					Thread.sleep(100);
 				} catch (InterruptedException ex) {
-					Conf.docWrite(buffer);
+					Config.docWrite(buffer);
 				}
 			}
 		} catch (Exception e) {
@@ -70,8 +88,9 @@ public class DocWriter implements Runnable {
 			MessageLog.push("Shutting down clone operation...", this.getClass().getSimpleName());
 		} finally {
 			// close our connection
-			MessageLog.push("disconnected from " + Conf.get_tgtCollection().getDB().getMongo().getConnectPoint(), this.getClass().getSimpleName() + ".");
-			Conf.get_tgtCollection().getDB().requestDone();
+			MessageLog.push("disconnected from " + Config.get_tgtCollection().getDB().getMongo().getConnectPoint(), this
+					.getClass().getSimpleName() + ".");
+			Config.get_tgtCollection().getDB().requestDone();
 			shutdown();
 		}
 	}

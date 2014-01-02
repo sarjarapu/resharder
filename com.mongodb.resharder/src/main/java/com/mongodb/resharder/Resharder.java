@@ -26,7 +26,7 @@ public class Resharder implements Runnable {
 	private String _DBname, _collectionName;
 
 	public Resharder() {
-		String[] params = Conf.get_Namepace().split("\\.");
+		String[] params = Config.get_Namepace().split("\\.");
 		_DBname = params[0];
 		_collectionName = params[1];
 	}
@@ -36,7 +36,7 @@ public class Resharder implements Runnable {
 			CommandResult result;
 
 			// Tell balancer not to run
-			result = Conf.get_adminDB().doEval(
+			result = Config.get_adminDB().doEval(
 					"function() {sh.setBalancerState(false); return sh.getBalancerState();}", new Object[0]);
 
 			if (Boolean.parseBoolean(result.toString())) {
@@ -46,7 +46,7 @@ public class Resharder implements Runnable {
 			// Wait for balancer to stop if active
 			DBCursor balancer;
 			while (true) {
-				balancer = Conf.get_configDB().getCollection("locks")
+				balancer = Config.get_configDB().getCollection("locks")
 						.find(new BasicDBObject("_id", "balancer").append("state", "2")).limit(1);
 				try {
 					if (!balancer.hasNext())
@@ -62,9 +62,9 @@ public class Resharder implements Runnable {
 			MessageLog.push("Balancer is inactive and disabled.", this.getClass().getSimpleName());
 
 			// Shard the target collection if reshard is true
-			if (Conf.is_reshard()) {
-				result = Conf.get_adminDB().command(
-						new BasicDBObject("enableSharding", Conf.get_TargetNamepace().split("\\.")[0]));
+			if (Config.is_reshard()) {
+				result = Config.get_adminDB().command(
+						new BasicDBObject("enableSharding", Config.get_TargetNamepace().split("\\.")[0]));
 
 				if (result.getInt("ok") != 1 && !result.getString("errmsg").equals("already enabled")) {
 					MessageLog.push("Unable to enable sharding on target DB.  errmsg: " + result.getString("errmsg"),
@@ -72,9 +72,9 @@ public class Resharder implements Runnable {
 					return;
 				}
 
-				result = Conf.get_adminDB().command(
-						new BasicDBObject("shardCollection", Conf.get_TargetNamepace()).append("key",
-								new BasicDBObject(Conf.get_reshardKey(), 1)));
+				result = Config.get_adminDB().command(
+						new BasicDBObject("shardCollection", Config.get_TargetNamepace()).append("key",
+								new BasicDBObject(Config.get_reshardKey(), 1)));
 
 				if (result.getInt("ok") != 1 && !result.getString("errmsg").equals("already sharded")) {
 					MessageLog.push(
@@ -83,7 +83,7 @@ public class Resharder implements Runnable {
 					return;
 				}
 
-				MessageLog.push("Target collection configured for sharding.  key: " + Conf.get_reshardKey(), this
+				MessageLog.push("Target collection configured for sharding.  key: " + Config.get_reshardKey(), this
 						.getClass().getSimpleName());
 			}
 
@@ -104,7 +104,7 @@ public class Resharder implements Runnable {
 				DBCollection oplog = oplogClient.getDB("local").getCollection("oplog.rs");
 				OpLogReader olr = new OpLogReader(oplog);
 
-				if (Conf.is_readSecondary()) {
+				if (Config.is_readSecondary()) {
 					DBObject retval = (DBObject) oplogClient.getDB("admin")
 							.doEval("function() {return rs.isMaster();}", new Object[0]).get("retval");
 
@@ -145,8 +145,7 @@ public class Resharder implements Runnable {
 									} catch (Exception e) {
 										// connection reset not unexpected when
 										// executing rs.reconfig()
-										// let the reconfig finish and then
-										// reinitialize Conf
+										// let the reconfig finish
 										Thread.sleep(2000);
 										MessageLog.push("Replication delay set to 10 hours on " + host, this.getClass()
 												.getSimpleName());
@@ -162,8 +161,8 @@ public class Resharder implements Runnable {
 				// Get a pointer to the source Collection
 				DBCollection source = dataClient.getDB(_DBname).getCollection(_collectionName);
 
-				String key = Conf.get_Namepace() + "." + shard.getName();
-				Chunk[] chunks = Conf.get_chunks().get(key).toArray(new Chunk[0]);
+				String key = Config.get_Namepace() + "." + shard.getName();
+				Chunk[] chunks = Config.get_chunks().get(key).toArray(new Chunk[0]);
 				Arrays.sort(chunks);
 				Chunk root = chunks[chunks.length / 2].load(chunks, 0, chunks.length - 1);
 
@@ -180,9 +179,9 @@ public class Resharder implements Runnable {
 
 			// if secondary read is true then restart mongos
 			// as it is probably hosed from the rs.reconfig()
-			if (Conf.is_readSecondary()) {
+			if (Config.is_readSecondary()) {
 				// get the command line args
-				result = Conf.get_adminDB().command("getCmdLineOpts");
+				result = Config.get_adminDB().command("getCmdLineOpts");
 
 				// build the command line and restart mongos on this host
 				StringBuilder sb = new StringBuilder();
@@ -198,7 +197,7 @@ public class Resharder implements Runnable {
 				MessageLog.push("Shutting down mongos...", this.getClass().getSimpleName());
 
 				try {
-					result = Conf.get_adminDB().command(new BasicDBObject("shutdown", 1));
+					result = Config.get_adminDB().command(new BasicDBObject("shutdown", 1));
 				} catch (Exception e) {
 					// NOOP we probably ended up here because the server went
 					// away before we could get a result

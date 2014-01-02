@@ -26,7 +26,7 @@ public class Launcher {
 	private long _ts = 0;
 
 	public static void main(String[] args) throws IOException {
-		Conf.processArgs(args);
+		Config.processArgs(args);
 
 		new Launcher();
 	}
@@ -84,7 +84,7 @@ public class Launcher {
 
 				if (!DocWriter.get_running()) {
 					try {
-						new Conf(request.queryParams("namespace"), request.queryParams("targetns"),
+						new Config(request.queryParams("namespace"), request.queryParams("targetns"),
 								Integer.parseInt(request.queryParams("readBatch")), Integer.parseInt(request.queryParams("writeBatch")),
 								Boolean.parseBoolean(request.queryParams("reshard")), request.queryParams("key"),
 								Boolean.parseBoolean(request.queryParams("secondary")), request.queryParams("srchost"),
@@ -108,7 +108,7 @@ public class Launcher {
 			protected void doHandle(Request request, Response response, Writer writer) throws IOException,
 					TemplateException {
 				SimpleHash hash = new SimpleHash();
-				Map<String, Long> map = Conf.getCounters();
+				Map<String, Long> map = Config.getCounters();
 				hash.put("docCount", map.get("docCount"));
 				hash.put("orphanCount", map.get("orphanCount"));
 				hash.put("oplogCount", map.get("oplogCount"));
@@ -157,16 +157,6 @@ public class Launcher {
 		});
 
 		get(new FreemarkerBasedRoute("/form.js", "form.js") {
-			@Override
-			protected void doHandle(Request request, Response response, Writer writer) throws IOException,
-					TemplateException {
-				template.process(new SimpleHash(), writer);
-
-			}
-
-		});
-
-		get(new FreemarkerBasedRoute("/jquery.sparkline.min.js", "jquery.sparkline.min.js") {
 			@Override
 			protected void doHandle(Request request, Response response, Writer writer) throws IOException,
 					TemplateException {

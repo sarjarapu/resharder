@@ -6,13 +6,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 
-public class Conf {
+public class Config {
 	private static String _ns, _targetns, _reshardKey;
 	private static DBCollection _src, _tgt, _log, _oplog;
 	private static DB _adminDB, _configDB, _logDB;
@@ -20,10 +21,10 @@ public class Conf {
 	private static int _readBatch, _writeBatch;
 	private static boolean _initialized = false;
 	private static Map<String, List<Chunk>> _chunks = new HashMap<String, List<Chunk>>();
-	private static AtomicLong _docCount = new AtomicLong(0), _orphanCount = new AtomicLong(0), _oplogCount = new AtomicLong(0);
+	private static AtomicLong _docCount = new AtomicLong(0), _orphanCount = new AtomicLong(0), _oplogCount = new AtomicLong(0), _oplogReads = new AtomicLong(0);
 	private static MongoClientURI _srcURI, _tgtURI, _logURI;
 
-	public Conf(String namespace, String targetns, int readBatch, int writeBatch, boolean reshard, String key,
+	public Config(String namespace, String targetns, int readBatch, int writeBatch, boolean reshard, String key,
 			boolean secondary, String srchost, String tgthost, String loghost) throws Exception {
 		
 		// TODO - check if a clone is in process and prompt to kill it
@@ -67,12 +68,14 @@ public class Conf {
 		_oplog = _logDB.getCollection("oplog_out");
 		_log.drop();
 		_oplog.drop();
+		_oplog.ensureIndex(new BasicDBObject("ts", 1));
 		
 		_chunks = new HashMap<String, List<Chunk>>();
 		
 		_docCount.set(0);
 		_orphanCount.set(0);
 		_oplogCount.set(0);
+		_oplogReads.set(0);
 		
 		_initialized = true;	
 	}
@@ -83,17 +86,22 @@ public class Conf {
 		map.put("docCount", new Long(_docCount.get()));
 		map.put("orphanCount", new Long(_orphanCount.get()));
 		map.put("oplogCount", new Long(_oplogCount.get()));
+		map.put("oplogReads", new Long(_oplogReads.get()));
 		
 		return map;
 	}
+	
+	public static void oplogCopy() {
+		_oplogReads.incrementAndGet();
+	}
 
 	public static void oplogWrite(DBObject doc) throws Exception {
-		if (Conf.get_oplog() != null) {
-			Conf.get_oplog().insert(doc);
+		if (Config.get_oplog() != null) {
+			Config.get_oplog().insert(doc);
 		} else {
 			throw new Exception("Unable to write oplog data, no collection has been set for output.");
 		}
-		Conf._oplogCount.incrementAndGet();
+		Config._oplogCount.incrementAndGet();
 	}
 
 	public static void docWrite(List<DBObject> docs) throws UnknownHostException {
@@ -109,7 +117,7 @@ public class Conf {
 			
 			_tgt.insert(docs.toArray(new DBObject[0]));
 			
-			Conf._docCount.addAndGet(docs.size());
+			Config._docCount.addAndGet(docs.size());
 		}
 	}
 
@@ -224,6 +232,6 @@ public class Conf {
 	}
 
 	public static void orphanDropped() {
-		Conf._orphanCount.incrementAndGet();
+		Config._orphanCount.incrementAndGet();
 	}
 }

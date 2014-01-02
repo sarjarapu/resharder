@@ -10,7 +10,7 @@ public class PerfCounters implements Runnable {
 	private static AtomicBoolean _running = new AtomicBoolean(false);
 	private static DBObject _rates = new BasicDBObject("docs", 0).append("oplogs", 0).append("orphans", 0);
 
-	private long _docs, _oplogs, _orphans, _ts = System.currentTimeMillis();
+	private long _docs, _oplogs, _orphans, _oplogReads, _ts = System.currentTimeMillis();
 
 	public static void shutdown() {
 		_running.set(false);
@@ -25,24 +25,27 @@ public class PerfCounters implements Runnable {
 		this._running.set(true);
 
 		while (_running.get()) {
-			long docs, oplogs, orphans, now = System.currentTimeMillis(), secs = (now - _ts) / 1000;
+			long docs, oplogs, orphans, oplogReads, now = System.currentTimeMillis(), secs = (now - _ts) / 1000;
 
 			if (secs == 0)
 				secs = 1;
 
-			Map<String, Long> counters = Conf.getCounters();
+			Map<String, Long> counters = Config.getCounters();
 
 			docs = counters.get("docCount").longValue();
 			orphans = counters.get("orphanCount").longValue();
 			oplogs = counters.get("oplogCount").longValue();
+			oplogReads = counters.get("oplogReads").longValue();
 
 			_rates.put("docs", ((docs - _docs) / secs));
 			_rates.put("oplogs", ((oplogs - _oplogs) / secs));
 			_rates.put("orphans", ((orphans - _orphans) / secs));
+			_rates.put("oplogCopies", ((oplogReads - _oplogReads) / secs));
 
 			_docs = docs;
 			_oplogs = oplogs;
 			_orphans = orphans;
+			_oplogReads = oplogReads;
 
 			_ts = now;
 			try {

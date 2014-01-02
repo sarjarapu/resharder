@@ -46,9 +46,9 @@ public class OpLogReader implements Runnable {
 
 				// TODO - What happens when multiple threads call this
 				// concurrently on the same client?
-				Conf.get_oplog().getDB().requestStart();
-				Conf.get_oplog().getDB().requestEnsureConnection();
-				MessageLog.push("outputting to " + Conf.get_oplog().getDB().getMongo().getConnectPoint() + ".", this
+				Config.get_oplog().getDB().requestStart();
+				Config.get_oplog().getDB().requestEnsureConnection();
+				MessageLog.push("outputting to " + Config.get_oplog().getDB().getMongo().getConnectPoint() + ".", this
 						.getClass().getSimpleName());
 
 				DBCursor cursor = _oplog.find(new BasicDBObject("ns", "test.grades"))
@@ -63,13 +63,13 @@ public class OpLogReader implements Runnable {
 				}
 
 				BasicDBObject query = new BasicDBObject("ts", new BasicDBObject("$gt", _ts)).append("ns",
-						Conf.get_Namepace());
+						Config.get_Namepace());
 				cursor = _oplog.find(query).sort(new BasicDBObject("$natural", 1))
 						.addOption(Bytes.QUERYOPTION_TAILABLE).addOption(Bytes.QUERYOPTION_AWAITDATA);
 
 				try {
 					while (cursor.hasNext() && _running.get()) {
-						Conf.oplogWrite(cursor.next());
+						Config.oplogWrite(cursor.next());
 					}
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -80,7 +80,7 @@ public class OpLogReader implements Runnable {
 					MessageLog.push("disconnected from " + _oplog.getDB().getMongo().getConnectPoint() + ".", this
 							.getClass().getSimpleName());
 					_oplog.getDB().requestDone();
-					Conf.get_oplog().getDB().requestDone();
+					Config.get_oplog().getDB().requestDone();
 				}
 
 				try {

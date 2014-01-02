@@ -41,16 +41,16 @@ public class ShardMapper {
 
 		DB configDB, adminDB, logDB;
 		try {
-			if (!Conf.isInitialized()) {
+			if (!Config.isInitialized()) {
 				_mongo = new MongoClient();
 
 				configDB = _mongo.getDB("config");
 				adminDB = _mongo.getDB("admin");
 				logDB = _mongo.getDB("resharder");
 			} else {
-				configDB = Conf.get_configDB();
-				adminDB = Conf.get_adminDB();
-				logDB = Conf.get_logDB();
+				configDB = Config.get_configDB();
+				adminDB = Config.get_adminDB();
+				logDB = Config.get_logDB();
 			}
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
@@ -156,7 +156,7 @@ public class ShardMapper {
 								// config map
 								String key = curColl.get("_id") + "." + chunk.getString("shard");
 								List<Chunk> chunkList= new ArrayList<Chunk>();
-								Conf.get_chunks().put(key, chunkList);
+								Config.get_chunks().put(key, chunkList);
 
 								DBCursor chunkCursor = chunkColl.find(new BasicDBObject("ns", curColl.get("_id")).append("shard", chunk.getString("shard")),
 										new BasicDBObject("shard", curDB.get("host")))
