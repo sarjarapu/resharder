@@ -19,6 +19,10 @@ public final class MessageLog {
 		doc.put("message", message);
 
 		Config.get_log().insert(doc);
+		
+		if (Config.isCLI()) {
+			System.out.println(date.toString() + ": (" + doc.get("sender") + ") " + doc.get("message"));
+		}
 
 		return true;
 	}

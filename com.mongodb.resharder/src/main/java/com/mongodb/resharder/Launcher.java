@@ -8,6 +8,7 @@ import spark.Response;
 import spark.Route;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Map;
@@ -26,8 +27,13 @@ public class Launcher {
 
 	public static void main(String[] args) throws IOException {
 		Config.processArgs(args);
+		System.setErr(new PrintStream("./err.log"));
 
-		new Launcher();
+		if (Config.isCLI()) {
+			Shell.runCLI();
+		} else {
+			new Launcher();
+		}
 	}
 
 	public Launcher() throws IOException {

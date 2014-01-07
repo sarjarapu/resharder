@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
+
+import net.sf.json.JSONObject;
 
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
@@ -113,9 +116,12 @@ public class Resharder implements Runnable {
 					return;
 				}
 
+				@SuppressWarnings("unchecked")
+				Map<String,Object> map = JSONObject.fromObject(Config.get_reshardKey());
+				
 				result = Config.get_adminDB().command(
 						new BasicDBObject("shardCollection", Config.get_TargetNamepace()).append("key",
-								new BasicDBObject(Config.get_reshardKey(), 1)));
+								new BasicDBObject(map)));
 
 				if (result.getInt("ok") != 1 && !result.getString("errmsg").equals("already sharded")) {
 					MessageLog.push(
