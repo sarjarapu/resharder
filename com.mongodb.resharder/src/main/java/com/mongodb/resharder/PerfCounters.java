@@ -22,7 +22,7 @@ public class PerfCounters implements Runnable {
 
 	@Override
 	public void run() {
-		this._running.set(true);
+		_running.set(true);
 
 		while (_running.get()) {
 			long docs, oplogs, orphans, oplogReads, now = System.currentTimeMillis(), secs = (now - _ts) / 1000;

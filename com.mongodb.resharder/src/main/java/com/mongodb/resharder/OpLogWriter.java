@@ -1,41 +1,43 @@
 package com.mongodb.resharder;
 
-import java.util.Stack;
+import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 
 public class OpLogWriter implements Runnable {
-	private static AtomicBoolean _running = new AtomicBoolean(false);
+	private static AtomicBoolean _running = new AtomicBoolean(false), _active = new AtomicBoolean(true);
 	private static AtomicInteger _processed = new AtomicInteger(0);
 
-	public static boolean get_running() {
+	public static boolean isRunning() {
 		return _running.get();
 	}
 
-	int _stopCount = 0;
+	public static boolean isActive() {
+		return _active.get();
+	}
+	
+	public static void shutdown() {
+		_running.set(false);
+	}
 
 	public void run() {
 		_running.set(true);
+		_active.set(true);
 
+		DBCursor oplog = null;
 		try {
-			Stack<DBObject> buffer = new Stack<DBObject>();
-
 			// use the same socket for all writes
-			// TODO - determine if we need multiple writers to the same
-			// collection object
 			Config.get_oplog().getDB().requestStart();
 			Config.get_oplog().getDB().requestEnsureConnection();
 
 			MessageLog.push("connected to " + Config.get_oplog().getDB().getMongo().getConnectPoint(), this.getClass()
 					.getSimpleName() + ".");
 
-			DBCursor oplog = Config.get_oplog().find().sort(new BasicDBObject("ts", 1)).skip(_processed.get())
+			oplog = Config.get_oplog().find().sort(new BasicDBObject("ts", 1)).skip(_processed.get())
 					.limit(Config.get_readBatch());
 
 			while (_running.get()) {
@@ -59,37 +61,38 @@ public class OpLogWriter implements Runnable {
 					_processed.incrementAndGet();
 				}
 
-				while (!oplog.hasNext()) {
-					try {
-						oplog.close();
-						oplog = Config.get_oplog().find().sort(new BasicDBObject("ts", 1)).skip(_processed.get())
-								.limit(Config.get_readBatch());
+				while (!oplog.hasNext() && _running.get()) {
+					oplog.close();
+					oplog = Config.get_oplog().find().sort(new BasicDBObject("ts", 1)).skip(_processed.get())
+							.limit(Config.get_readBatch());
 
-						if (!oplog.hasNext()) {
-							MessageLog.push("No OpLog entries found, sleeping for 10 seconds...", this.getClass()
-									.getSimpleName());
+					if (!oplog.hasNext()) {
+						_active.set(false);
 
-							// Wait for more docs
-							Thread.sleep(10000);
-						}
-					} catch (InterruptedException ex) {
+						MessageLog.push("No pending OpLog entries found, sleeping for 10 seconds...", this.getClass()
+								.getSimpleName());
+
+						// Wait for more docs
+						Thread.sleep(10000);
 					}
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
-			MessageLog.push("ERROR: " + e.getMessage(), this.getClass().getSimpleName());
-			MessageLog.push("Shutting down clone operation...", this.getClass().getSimpleName());
+			if (e instanceof InterruptedException) {
+				// NOOP
+			} else {
+				e.printStackTrace();
+				MessageLog.push("ERROR: " + e.getMessage(), this.getClass().getSimpleName());
+			}
 		} finally {
 			// close our connection
+			oplog.close();
+			Config.get_oplog().getDB().requestDone();
+			
 			MessageLog.push("disconnected from " + Config.get_tgtCollection().getDB().getMongo().getConnectPoint(),
 					this.getClass().getSimpleName() + ".");
-			Config.get_oplog().getDB().requestDone();
-			shutdown();
+			
+			_running.set(false);
 		}
-	}
-
-	public static void shutdown() {
-		_running.set(false);
 	}
 }

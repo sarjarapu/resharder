@@ -5,7 +5,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.TimeUnit;
 
 import com.mongodb.DBObject;
 
@@ -65,13 +64,14 @@ public class DocWriter implements Runnable {
 				}
 
 				try {
+					// check to see if we are still copying
 					if (_readers.get() == 0) {
 						// start replaying the oplog
 						MessageLog.push("All readers finshed, commencing Oplog replay...", this.getClass().getSimpleName());
 						Config.docWrite(buffer);
 						buffer.clear();
 						
-						Launcher._tp.schedule(new OpLogWriter(), 0, TimeUnit.MILLISECONDS);
+						Launcher._tp.execute(new OpLogWriter());
 						
 						break;
 					} else {

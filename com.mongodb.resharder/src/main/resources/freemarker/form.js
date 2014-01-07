@@ -3,10 +3,36 @@ var auto_refresh = setInterval(function() {
 		$('.messageLog').load('/getStatus', function(data) {
 			if (data.localeCompare("undefined") != 0)
 				document.getElementById("term").innerHTML += data
+			
+			document.getElementById('term').scrollTop = document.getElementById('term').scrollHeight;
+				
+			if (data.indexOf("10 seconds") > 0) {
+				// TODO collections are synced so make the stop button visible
+			}
 		});
+		
 		$('.counterClass').load('/getCounters', function(data) {
 			document.getElementById("monitor").innerHTML = data
 		});
+		
+		$('.synchClass').load('/isActive', function(data) {
+			document.getElementById("synch").innerHTML = data;
+			
+			if (data.localeCompare("false") == 0) {
+				$('#synchDiv').html("OpLog replay is synchronized.  Disconnect data writers and then hit STOP.<br><button type='submit' name='submit' class='stopButton' id='stop_btn' value='Submit'>STOP</button><br>");
+				$('.stopButton').click(function() {
+					$.ajax({
+						type : "POST",
+						url : "/end",
+						success : function() {
+							$('#synchDiv').hide();
+							clearInterval(auto_refresh);
+						}
+					});	
+				});
+			}
+		});
+		
 		$('.counterVals').load('/getChartData'), function(data) {
 			document.getElementById("counterVals").innerHTML = data;
 		}
@@ -14,6 +40,7 @@ var auto_refresh = setInterval(function() {
 }, 1000); // refresh every second
 
 $(function() {
+	
 	$(".button").click(function() {
 						// TODO - validate and process form here
 						var ns = $("input#frmNamespace").val();
@@ -27,9 +54,12 @@ $(function() {
 						var key = $("input#frmKey").val();
 						var secondary = $("input#cbxSecondary").val();
 
-						$('#formDiv').html("<div id='term' class='console'></div><br>"
-												+ "<div id='container' style='min-width: 310px; height: 400px; margin: 0 auto'></div><br>"
-												+ "<div id='monitor' class='console'</div>");
+						$('#formDiv').html("<div id='container' style='min-width: 310px; height: 300px; margin: 0 auto'></div><br><div id='synchDiv'></div><br>");
+						
+						$('#perfTitle').html("Clone/Reshard Progress");
+						$('#perfGraph').html("<div id='term' class='console'></div>");
+						$('#perfCounters').html("<div id='monitor' class='consoleSmall'</div><br>");
+						
 
 						var dataString = "namespace=" + ns + "&targetns="
 								+ targetns + "&readBatch=" + readBatch
@@ -88,7 +118,7 @@ $(function() {
 						                }
 						            },
 						            title: {
-						                text: 'Live random data'
+						                text: 'Processing Rates'
 						            },
 						            xAxis: {
 						                type: 'datetime',

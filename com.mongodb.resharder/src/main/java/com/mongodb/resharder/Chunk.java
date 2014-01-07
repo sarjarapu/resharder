@@ -8,15 +8,29 @@ import org.bson.types.MinKey;
 
 import com.mongodb.DBObject;
 
+/**
+ * @author rhoulihan
+ * 
+ */
 public class Chunk implements Comparable<Chunk> {
 	private Object _min, _max;
 	private String _shardkey, _shard;
 	private Chunk _left, _right;
 
-	public Chunk(Object pMin, Object pMax, String shard) {
+	/**
+	 * @param pMin
+	 *            an Object representing the minimum value of the Chunk range or
+	 *            null if this is the lowest range
+	 * @param pMax
+	 *            an Object representing the minimum value of the Chunk range or
+	 *            null if this is the lowest range
+	 * @param pShard
+	 *            the name of the Shard this Chunk belongs to
+	 */
+	public Chunk(Object pMin, Object pMax, String pShard) {
 		DBObject min = (DBObject) pMin, max = (DBObject) pMax;
 		_shardkey = max.toMap().keySet().toArray()[0].toString();
-		_shard = shard;
+		_shard = pShard;
 
 		@SuppressWarnings("rawtypes")
 		Iterator it = max.toMap().values().iterator();
@@ -32,67 +46,75 @@ public class Chunk implements Comparable<Chunk> {
 		}
 	}
 
+	/**
+	 * Test if a key is in the range of any Chunk in the tree for this Shard
+	 * 
+	 * @param pKey
+	 *            the key to test
+	 * @return true if key is in a Chunk range on the tree, false if not
+	 * @throws Exception
+	 */
 	public boolean isOrphan(Object pKey) throws Exception {
 		try {
-		if (pKey instanceof String) {
-			// TODO this needs some debugging
-			if (_min.toString().compareTo(pKey.toString()) <= 0 && _max.toString().compareTo(pKey.toString()) >= 0)
-				return false;
+			if (pKey instanceof String) {
+				// TODO this needs some debugging
+				if (_min.toString().compareTo(pKey.toString()) <= 0 && _max.toString().compareTo(pKey.toString()) >= 0)
+					return false;
 
-			if (_min.toString().compareTo(pKey.toString()) >= 0 && _left != null)
-				return _left.isOrphan(pKey);
+				if (_min.toString().compareTo(pKey.toString()) >= 0 && _left != null)
+					return _left.isOrphan(pKey);
 
-			if (_max.toString().compareTo(pKey.toString()) < 0 && _right != null)
-				return _right.isOrphan(pKey);
-		} else if (pKey instanceof Integer) {
-			Integer key = (Integer) pKey;
-			
-			if (_min == null && _max == null)
-				return false;
-			
-			Integer min = (Integer) _min;
-			
-			if (_max == null && min.compareTo(key) > 0)
-				return true;
-			
-			if (_max == null && min.compareTo(key) <= 0)
-				return false;
-			
-			Integer max = (Integer) _max;
-			
-			if (_min == null && max.compareTo(key) < 0)
-				return true;
-			
-			if (_min == null && max.compareTo(key) >= 0)
-				return false;
-			
-			if (min.compareTo(key) <= 0 && max.compareTo(key) >= 0)
-				return false;
-		} else if (pKey instanceof Long) {
-			Long key = (Long) pKey;
-			
-			if (_min == null && _max == null)
-				return false;
-			
-			Long min = (Long) _min;
-			
-			if (_max == null && min.compareTo(key) >= 0)
-				return true;
-			
-			if (_max == null && min.compareTo(key) <= 0)
-				return false;
-			
-			Long max = (Long) _max;
-			
-			if (_min == null && max.compareTo(key) < 0)
-				return true;
-			
-			if (_min == null && max.compareTo(key) >= 0)
-				return false;
-			
-			if (min.compareTo(key) <= 0 && max.compareTo(key) >= 0)
-				return false;
-		}
+				if (_max.toString().compareTo(pKey.toString()) < 0 && _right != null)
+					return _right.isOrphan(pKey);
+			} else if (pKey instanceof Integer) {
+				Integer key = (Integer) pKey;
+
+				if (_min == null && _max == null)
+					return false;
+
+				Integer min = (Integer) _min;
+
+				if (_max == null && min.compareTo(key) > 0)
+					return true;
+
+				if (_max == null && min.compareTo(key) <= 0)
+					return false;
+
+				Integer max = (Integer) _max;
+
+				if (_min == null && max.compareTo(key) < 0)
+					return true;
+
+				if (_min == null && max.compareTo(key) >= 0)
+					return false;
+
+				if (min.compareTo(key) <= 0 && max.compareTo(key) >= 0)
+					return false;
+			} else if (pKey instanceof Long) {
+				Long key = (Long) pKey;
+
+				if (_min == null && _max == null)
+					return false;
+
+				Long min = (Long) _min;
+
+				if (_max == null && min.compareTo(key) >= 0)
+					return true;
+
+				if (_max == null && min.compareTo(key) <= 0)
+					return false;
+
+				Long max = (Long) _max;
+
+				if (_min == null && max.compareTo(key) < 0)
+					return true;
+
+				if (_min == null && max.compareTo(key) >= 0)
+					return false;
+
+				if (min.compareTo(key) <= 0 && max.compareTo(key) >= 0)
+					return false;
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new Exception(e.getMessage());
@@ -125,7 +147,7 @@ public class Chunk implements Comparable<Chunk> {
 			return 1;
 
 		if (_min instanceof String)
-			//TODO needs debugging
+			// TODO needs debugging
 			val = (_min.toString().compareTo(o._max.toString()) < 0) ? -1 : (_max.toString().compareTo(
 					o._min.toString()) > 0) ? 1 : 0;
 
@@ -140,22 +162,6 @@ public class Chunk implements Comparable<Chunk> {
 		}
 
 		return val;
-	}
-
-	public Chunk get_right() {
-		return _right;
-	}
-
-	public void set_right(Chunk _right) {
-		this._right = _right;
-	}
-
-	public Chunk get_left() {
-		return _left;
-	}
-
-	public void set_left(Chunk _left) {
-		this._left = _left;
 	}
 
 	public String get_shardkey() {

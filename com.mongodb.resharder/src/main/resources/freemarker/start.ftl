@@ -25,11 +25,25 @@
   font-size: 75%;
   height: 400px;
 }
+
+
+.consoleSmall {
+  font-family:Courier;
+ color: #CCCCCC;
+  background: #000000;
+  border: 3px double #CCCCCC;
+  padding: 10px;
+  overflow: scroll;
+  text-align: left;
+  font-size: 75%;
+  height: 100px;
+}
 </style></head><body>
 
-<div id="messages" class="messageLog" style="display: none;" ;=""></div>
-<div id="counters" class="counterClass" style="display: none;" ;=""></div>
-<div id="counterVals" class="counterVals" style="display: none;" ;="">${data}</div>
+<div id="messages" class="messageLog" style="display: none;"></div>
+<div id="counters" class="counterClass" style="display: none;"></div>
+<div id="synch" class="synchClass" style="display: none;"></div>
+<div id="counterVals" class="counterVals" style="display: none;">${data}</div>
 <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js?lang=css&amp;skin=sunburst">
 </script>
 
@@ -73,12 +87,17 @@ Resharder<br>
       <table style="text-align: left; width: 100%; margin-left: auto; margin-right: auto;" border="0" cellpadding="0" cellspacing="0">
         <tbody>
           <tr>
-            <td colspan="2" rowspan="1" style="vertical-align: top; text-align: center;">Shard
-Configuration</td>
+            <td colspan="2" rowspan="1" style="vertical-align: top; text-align: center;">
+          <div id="perfTitle" name="perfTitle">
+          Shard Configuration
+          </div>
+          </td>
           </tr>
           <tr>
             <td colspan="2" rowspan="1">
+          <div id="perfGraph" name="perfGraph">
             <pre id="config" class="prettyprint"><br></pre>
+          </div>
             <br>
             </td>
           </tr>
@@ -94,7 +113,9 @@ Status</td>
           </tr>
           <tr>
             <td colspan="2" rowspan="1" style="vertical-align: top;">
+            <div id="perfCounters" name="perfCounters">
             <pre id="json" class="prettyprint">${collections}</pre>
+            </div>
             <br>
             <br>
             </td>
@@ -123,7 +144,7 @@ Collection<br>
               </td>
             </tr>
             <tr>
-              <td colspan="1" rowspan="8" style="vertical-align: top;">
+              <td colspan="1" rowspan="8" style="vertical-align: top; text-align: left;">
               <#list collList as coll>
               
               <p><input name="namespace" id="frmNamespace" value="${coll}" type="radio">${coll}
