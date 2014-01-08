@@ -10,11 +10,8 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.CommandResult;
-import com.mongodb.DB;
-import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
-import com.mongodb.MongoClient;
 import com.mongodb.ServerAddress;
 
 import freemarker.template.SimpleHash;
@@ -28,51 +25,32 @@ public class ShardMapper {
 
 	// TODO this class is very ugly but no time to cleanup this code, apologies
 	// if it hurts your eyes to read
-	
+
 	// Connect to mongos and pull the shard configuration
 	public static SimpleHash getShardingStatus(SimpleHash hash) {
-		if (hash == null)
-			hash = new SimpleHash();
-		
+
 		_shards = new ArrayList<Shard>();
+		Config.init(null);
+
 		List<String> _collections = new ArrayList<String>();
+
+		// object to hold the current shard config
 		BasicDBObject _shardconf = new BasicDBObject();
-		MongoClient _mongo;
 
-		DB configDB, adminDB, logDB;
-		try {
-			if (!Config.isInitialized()) {
-				_mongo = new MongoClient();
+		_shardconf.put("version", Config.get_configDB().getCollection("version").findOne());
 
-				configDB = _mongo.getDB("config");
-				adminDB = _mongo.getDB("admin");
-				logDB = _mongo.getDB("resharder");
-			} else {
-				configDB = Config.get_configDB();
-				adminDB = Config.get_adminDB();
-				logDB = Config.get_logDB();
-			}
-		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return null;
-		}
-
-		_shardconf.put("version", configDB.getCollection("version").findOne());
-
-		CommandResult result = adminDB.command(new BasicDBObject("listShards", 1));
-
-		hash.put("mongos", result.get("serverUsed"));
-		hash.put("shardInfo", result.toString());
+		CommandResult result = Config.get_adminDB().command(new BasicDBObject("listShards", 1));
 
 		@SuppressWarnings("unchecked")
 		List<DBObject> shards = (List<DBObject>) result.get("shards");
 
-		hash.put("numShards", shards.size());
-		int numRepl = 0, numServers = 0, numShards = 0;
+		if (hash != null) {
+			hash.put("mongos", result.get("serverUsed"));
+			hash.put("shardInfo", result.toString());
+			hash.put("numShards", shards.size());
+		}
 
 		for (DBObject shard : shards) {
-			numShards++;
 			String servers = shard.get("host").toString();
 
 			String[] hosts = servers.split(",");
@@ -88,19 +66,15 @@ public class ShardMapper {
 					addrs.add(new ServerAddress(addr[0], Integer.parseInt(addr[1])));
 				}
 			} catch (UnknownHostException e) {
-				// We are not in Kansas anymore...
 				return null;
 			}
 
 			if (servers.indexOf("/") > 0) {
-				numRepl++;
-				shard.put("isReplSet", false);
+				shard.put("isReplSet", true);
 				_shards.add(new Shard(servers.split("/")[0], addrs, true));
 			} else {
-				_shards.add(new Shard("SERVER_" + numShards, addrs, false));
+				_shards.add(new Shard("", addrs, false));
 			}
-
-			numServers += hosts.length;
 
 			shard.put("hosts", hosts);
 			shard.removeField("host");
@@ -108,14 +82,9 @@ public class ShardMapper {
 
 		_shardconf.put("shards", shards);
 
-		hash.put("numRepl", numRepl);
-		hash.put("numServers", numServers);
-
-		DBCollection databases = configDB.getCollection("databases"), collections;
-
 		DBCursor dbCursor = null, collectionCursor = null;
 		try {
-			dbCursor = databases.find().sort(new BasicDBObject("name", 1));
+			dbCursor = Config.get_configDB().getCollection("databases").find().sort(new BasicDBObject("name", 1));
 			shards = new ArrayList<DBObject>();
 			while (dbCursor.hasNext()) {
 				DBObject curDB = dbCursor.next();
@@ -123,13 +92,11 @@ public class ShardMapper {
 				database.putAll(curDB);
 
 				if (curDB.get("partitioned").equals(true)) {
-					collections = configDB.getCollection("collections");
-
 					Pattern regex = Pattern.compile("^" + StringEscapeUtils.escapeJava(curDB.get("_id").toString())
 							+ "\\.");
 
-					collectionCursor = collections.find(new BasicDBObject("_id", regex)).sort(
-							new BasicDBObject("_id", 1));
+					collectionCursor = Config.get_configDB().getCollection("collections")
+							.find(new BasicDBObject("_id", regex)).sort(new BasicDBObject("_id", 1));
 
 					List<BasicDBObject> collectionsList = new ArrayList<BasicDBObject>();
 					while (collectionCursor.hasNext()) {
@@ -141,10 +108,11 @@ public class ShardMapper {
 							_collections.add(curColl.get("_id").toString());
 							collection.put("shard key", curColl.get("key"));
 
-							DBCollection chunkColl = configDB.getCollection("chunks");
-							BasicDBList info = (BasicDBList) chunkColl.group(new BasicDBObject("shard", 1),
-									new BasicDBObject("ns", curColl.get("_id")), new BasicDBObject("nChunks", 0),
-									"function( doc , out ){ out.nChunks++; }");
+							BasicDBList info = (BasicDBList) Config
+									.get_configDB()
+									.getCollection("chunks")
+									.group(new BasicDBObject("shard", 1), new BasicDBObject("ns", curColl.get("_id")),
+											new BasicDBObject("nChunks", 0), "function( doc , out ){ out.nChunks++; }");
 
 							List<BasicDBObject> chunks = new ArrayList<BasicDBObject>();
 							int totalChunks = 0;
@@ -155,11 +123,15 @@ public class ShardMapper {
 								// Add list of chunks for this shard to the
 								// config map
 								String key = curColl.get("_id") + "." + chunk.getString("shard");
-								List<Chunk> chunkList= new ArrayList<Chunk>();
+								List<Chunk> chunkList = new ArrayList<Chunk>();
 								Config.get_chunks().put(key, chunkList);
 
-								DBCursor chunkCursor = chunkColl.find(new BasicDBObject("ns", curColl.get("_id")).append("shard", chunk.getString("shard")),
-										new BasicDBObject("shard", curDB.get("host")))
+								DBCursor chunkCursor = Config
+										.get_configDB()
+										.getCollection("chunks")
+										.find(new BasicDBObject("ns", curColl.get("_id")).append("shard",
+												chunk.getString("shard")),
+												new BasicDBObject("shard", curDB.get("host")))
 										.sort(new BasicDBObject("min", 1));
 
 								List<DBObject> chunkDocs = new ArrayList<DBObject>();
@@ -184,14 +156,16 @@ public class ShardMapper {
 			}
 
 			_shardconf.put("databases", shards);
-			hash.put("collections", _shardconf.toString());
-			hash.put("collList", _collections);
 
-			DBCollection config = logDB.getCollection("config");
-			if (config != null)
-				config.drop();
+			if (hash != null) {
+				hash.put("collections", _shardconf.toString());
+				hash.put("collList", _collections);
+			}
 
-			config.insert(_shardconf);
+			if (Config.get_logDB().getCollection("config") != null)
+				Config.get_logDB().getCollection("config").drop();
+
+			Config.get_logDB().getCollection("config").insert(_shardconf);
 		} finally {
 			if (dbCursor != null)
 				dbCursor.close();

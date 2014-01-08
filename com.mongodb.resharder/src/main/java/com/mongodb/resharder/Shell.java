@@ -41,16 +41,15 @@ public class Shell {
 
 	@Command
 	public void execute() throws UnknownHostException {
+		Config.init(null);
+		
 		if (Config.validate()) {
 			System.out.println("Executing...");
+			
+			Launcher._tp.execute(new Resharder());
 		} else {
 			System.out.println("Invalid Configuration");
 		}
-		Config.print();
-		
-		new Config();
-		
-		Launcher._tp.execute(new Resharder());
 	}
 	
 	@Command

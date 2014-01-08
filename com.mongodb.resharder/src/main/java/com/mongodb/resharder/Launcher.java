@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -89,12 +90,20 @@ public class Launcher {
 
 				if (!DocWriter.get_running()) {
 					try {
-						new Config(request.queryParams("namespace"), request.queryParams("targetns"),
-								Integer.parseInt(request.queryParams("readBatch")), Integer.parseInt(request
-										.queryParams("writeBatch")), Boolean.parseBoolean(request
-										.queryParams("reshard")), request.queryParams("key"),
-								Boolean.parseBoolean(request.queryParams("secondary")), request.queryParams("srchost"),
-								request.queryParams("tgthost"), request.queryParams("loghost"));
+						Map<String, String> map = new HashMap<String,String>();
+						
+						map.put("namespace", request.queryParams("namespace"));
+						map.put("targetns", request.queryParams("targetns"));
+						map.put("readBatch", request.queryParams("readBatch"));
+						map.put("writeBatch", request.queryParams("writeBatch"));
+						map.put("reshard", request.queryParams("reshard"));
+						map.put("key", request.queryParams("key"));
+						map.put("secondary", request.queryParams("secondary"));
+						map.put("srchost", request.queryParams("srchost"));
+						map.put("tgthost", request.queryParams("tgthost"));
+						map.put("loghost", request.queryParams("loghost"));
+						
+						Config.init(map);
 
 						_tp.execute(new Resharder());
 					} catch (NumberFormatException e) {

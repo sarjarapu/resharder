@@ -1,6 +1,5 @@
 package com.mongodb.resharder;
 
-import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.List;
@@ -21,53 +20,46 @@ public class Config {
 	private static DB _adminDB, _configDB, _logDB;
 	private static boolean _secondary = false, _reshard = false, _isCLI = false;
 	private static int _readBatch, _writeBatch;
-	private static boolean _initialized = false;
 	private static Map<String, List<Chunk>> _chunks = new HashMap<String, List<Chunk>>();
 	private static AtomicLong _docCount = new AtomicLong(0), _orphanCount = new AtomicLong(0),
 			_oplogCount = new AtomicLong(0), _oplogReads = new AtomicLong(0);
 	private static MongoClientURI _srcURI, _tgtURI, _logURI;
-	private static Map<String,String> _props = new HashMap<String, String>();
+	private static Map<String, String> _props = new HashMap<String, String>();
 
-	public Config(String namespace, String targetns, int readBatch, int writeBatch, boolean reshard, String key,
-			boolean secondary, String srchost, String tgthost, String loghost) throws Exception {
+	public static void init(Map<String, String> props) {
 
 		// TODO - check if a clone is in process and prompt to kill it
 		// for now kill any resharder threads that might be running
 		if (OpLogWriter.isRunning()) {
-			MessageLog.push("ERROR:, clone operation in progress.", this.getClass().getSimpleName());
-			throw new Exception("ERROR:, clone operation in progress.");
+			MessageLog.push("ERROR:, clone operation in progress.", Config.class.getSimpleName());
 		}
 
-		_targetns = targetns;
+		if (props != null) {
+			for (Entry<String, String> prop : props.entrySet()) {
+				setProperty(prop.getKey(), prop.getValue());
+			}
+		}
 
-		_reshard = reshard;
-		_reshardKey = key;
+		loadDefaults();
 
-		_ns = namespace;
-		_readBatch = readBatch;
-		_writeBatch = writeBatch;
-		_secondary = secondary;
+		_chunks = new HashMap<String, List<Chunk>>();
 
-		_srcURI = new MongoClientURI("mongodb://" + srchost);
-		_tgtURI = new MongoClientURI("mongodb://" + tgthost);
-		_logURI = new MongoClientURI("mongodb://" + loghost);
-
-		init();
-	}
-
-	public Config() throws UnknownHostException {
-		init();
+		_docCount.set(0);
+		_orphanCount.set(0);
+		_oplogCount.set(0);
+		_oplogReads.set(0);
 	}
 
 	public static boolean validate() {
-		if (_srcURI == null || _tgtURI == null || _logURI == null || _ns.isEmpty() || _targetns.isEmpty() || (_reshard && _reshardKey.isEmpty())) {
-    		System.out.println("Incomplete Configuration\n");
+		if (_srcURI == null || _tgtURI == null || _logURI == null || _ns.isEmpty() || _targetns.isEmpty()
+				|| (_reshard && _reshardKey.isEmpty())) {
+			System.out.println("Incomplete Configuration\n");
 			return false;
 		}
-		
+
 		return true;
 	}
-	
+
 	public static void print() {
 		System.out.println();
 		System.out.println("Current Configuration");
@@ -83,35 +75,6 @@ public class Config {
 		System.out.println("readBatch:     " + _props.get("readBatch"));
 		System.out.println("writeBatch:    " + _props.get("writeBatch"));
 		System.out.println();
-	}
-
-	private static void init() throws UnknownHostException {
-		MongoClient srcClient = new MongoClient(_srcURI);
-		MongoClient tgtClient = new MongoClient(_tgtURI);
-		MongoClient logClient = new MongoClient(_logURI);
-
-		_adminDB = srcClient.getDB("admin");
-		_configDB = srcClient.getDB("config");
-		_logDB = logClient.getDB("resharder");
-
-		String[] params = _targetns.split("\\.");
-		_tgt = tgtClient.getDB(params[0]).getCollection(params[1]);
-		_tgt.drop();
-
-		_log = _logDB.getCollection("log");
-		_oplog = _logDB.getCollection("oplog_out");
-		_log.drop();
-		_oplog.drop();
-		_oplog.ensureIndex(new BasicDBObject("ts", 1));
-
-		_chunks = new HashMap<String, List<Chunk>>();
-
-		_docCount.set(0);
-		_orphanCount.set(0);
-		_oplogCount.set(0);
-		_oplogReads.set(0);
-
-		_initialized = true;
 	}
 
 	public static Map<String, Long> getCounters() {
@@ -162,61 +125,82 @@ public class Config {
 			else
 				_isCLI = true;
 		}
-		
+
 		loadDefaults();
 	}
-	
+
 	private static void loadDefaults() {
-		if (!_props.containsKey("source")) 
+		if (!_props.containsKey("source"))
 			setProperty("source", "localhost:27017");
-		
-		if (!_props.containsKey("target")) 
+
+		if (!_props.containsKey("target"))
 			setProperty("target", "localhost:27017");
-		
-		if (!_props.containsKey("log")) 
+
+		if (!_props.containsKey("log"))
 			setProperty("log", "localhost:28017");
-		
-		if (!_props.containsKey("namespace")) 
+
+		if (!_props.containsKey("namespace"))
 			setProperty("namespace", "test.grades");
-		
-		if (!_props.containsKey("targetns")) 
+
+		if (!_props.containsKey("targetns"))
 			setProperty("targetns", "resharder.clone");
-		
-		if (!_props.containsKey("readSecondary")) 
+
+		if (!_props.containsKey("readSecondary"))
 			setProperty("readSecondary", "true");
-		
-		if (!_props.containsKey("reshard")) 
+
+		if (!_props.containsKey("reshard"))
 			setProperty("reshard", "true");
-		
-		if (!_props.containsKey("key")) 
+
+		if (!_props.containsKey("key"))
 			setProperty("key", "{_id:\"hashed\"}");
-		
-		if (!_props.containsKey("readBatch")) 
+
+		if (!_props.containsKey("readBatch"))
 			setProperty("readBatch", "100");
-		
-		if (!_props.containsKey("writeBatch")) 
+
+		if (!_props.containsKey("writeBatch"))
 			setProperty("writeBatch", "50");
 	}
 
 	public static String setProperty(String prop, String val) {
 		String ret = "Bad Configuration Property:  " + prop;
+		MongoClient mongo;
 
 		try {
 			switch (prop) {
 			case "source":
 				_srcURI = new MongoClientURI("mongodb://" + val);
+				mongo = new MongoClient(_srcURI);
+
+				_adminDB = mongo.getDB("admin");
+				_configDB = mongo.getDB("config");
+
 				ret = "Source host set to " + val;
 				_props.put("source", val);
 				break;
 
 			case "target":
 				_tgtURI = new MongoClientURI("mongodb://" + val);
+				mongo = new MongoClient(_tgtURI);
+
+				String[] params = _targetns.split("\\.");
+				_tgt = mongo.getDB(params[0]).getCollection(params[1]);
+				_tgt.drop();
+
 				ret = "Target host set to " + val;
 				_props.put("target", val);
 				break;
 
 			case "log":
 				_logURI = new MongoClientURI("mongodb://" + val);
+				mongo = new MongoClient(_logURI);
+
+				_logDB = mongo.getDB("resharder");
+				_log = _logDB.getCollection("log");
+				_oplog = _logDB.getCollection("oplog_out");
+				_log.drop();
+				_oplog.drop();
+				_oplog.ensureIndex(new BasicDBObject("ts", 1));
+
 				ret = "Log host set to " + val;
 				_props.put("log", val);
 				break;
@@ -316,10 +300,6 @@ public class Config {
 
 	public static DB get_adminDB() {
 		return _adminDB;
-	}
-
-	public static boolean isInitialized() {
-		return _initialized;
 	}
 
 	public static DB get_configDB() {
