@@ -16,34 +16,35 @@ import com.mongodb.DBCursor;
 public class Resharder implements Runnable {
 
 	private static LinkedList<Runnable> _threads = new LinkedList<Runnable>();
-	
+
 	public static void addWorker(Runnable worker) {
 		_threads.add(worker);
 	}
-	
+
 	public static void shutdown() throws InterruptedException, IOException {
-		
+
 		OpLogReader.shutdown();
 		OpLogWriter.shutdown();
-		
+
 		if (Config.is_readSecondary()) {
 			for (Shard shard : ShardMapper.getShards()) {
 				shard.setReplicationDelay(0);
 			}
-			
+
 			// let the replica sets settle down
 			Thread.sleep(2000);
-			
+
 			bounceMongos();
 		}
-		
-		MessageLog.push("Clone/Reshard completed.  namespace: " + Config.get_TargetNamepace(), Resharder.class.getSimpleName());
+
+		MessageLog.push("Clone/Reshard completed.  namespace: " + Config.get_TargetNamepace(),
+				Resharder.class.getSimpleName());
 	}
 
 	public Resharder() {
 		_threads = new LinkedList<Runnable>();
 	}
-	
+
 	private static void bounceMongos() throws IOException, InterruptedException {
 		// get the command line args
 		CommandResult result = Config.get_adminDB().command("getCmdLineOpts");
@@ -59,7 +60,7 @@ public class Resharder implements Runnable {
 		}
 
 		// shutdown mongos
-		MessageLog.push("Shutting down mongos...", "Resharder");
+		MessageLog.push("Shutting down mongos...", Resharder.class.getSimpleName());
 
 		try {
 			result = Config.get_adminDB().command(new BasicDBObject("shutdown", 1));
@@ -68,11 +69,20 @@ public class Resharder implements Runnable {
 			// away before we could get a result
 		}
 
-		MessageLog.push("Restarting mongos.  cmdLine: " + sb.toString(), "Resharder");
+		MessageLog.push("Restarting mongos.  cmdLine: " + sb.toString(), Resharder.class.getSimpleName());
 		Runtime.getRuntime().exec(argv);
 
 		// let things settle down and initialize
 		Thread.sleep(5000);
+
+		// restart Balancer
+		MessageLog.push("Restarting Balancer...", Resharder.class.getSimpleName());
+		result = Config.get_adminDB().doEval("function() {sh.setBalancerState(true); return sh.getBalancerState();}",
+				new Object[0]);
+
+		if (Boolean.parseBoolean(result.toString())) {
+			MessageLog.push("ERUnable to start Balancer", Resharder.class.getSimpleName());
+		}
 	}
 
 	public void run() {
@@ -117,8 +127,8 @@ public class Resharder implements Runnable {
 				}
 
 				@SuppressWarnings("unchecked")
-				Map<String,Object> map = JSONObject.fromObject(Config.get_reshardKey());
-				
+				Map<String, Object> map = JSONObject.fromObject(Config.get_reshardKey());
+
 				result = Config.get_adminDB().command(
 						new BasicDBObject("shardCollection", Config.get_TargetNamepace()).append("key",
 								new BasicDBObject(map)));
@@ -155,7 +165,7 @@ public class Resharder implements Runnable {
 			if (Config.is_readSecondary()) {
 				// let the replica sets settle down
 				Thread.sleep(2000);
-				
+
 				bounceMongos();
 			}
 
