@@ -157,7 +157,7 @@ public class Launcher {
 
 		});
 
-		get(new FreemarkerBasedRoute("/getChartData", "counterVals.ftl") {
+		get(new FreemarkerBasedRoute("/getChartData", "countervals.ftl") {
 			@Override
 			protected void doHandle(Request request, Response response, Writer writer) throws IOException,
 					TemplateException {

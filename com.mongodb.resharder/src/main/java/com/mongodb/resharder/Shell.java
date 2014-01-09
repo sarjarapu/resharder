@@ -18,12 +18,12 @@ public class Shell {
 	public void help() {
 		System.out.println("Available commands are:");
 		System.out.println("set <property> <value>");
-		System.out.println("\t source <hostname:port>\t\t\t- address of the source server");
-		System.out.println("\t target <hostname:port>\t\t\t- address of the target server");
-		System.out.println("\t log <hostname:port>\t\t\t- address of the log server");
+		System.out.println("\t srchost <hostname:port>\t\t\t- address of the source server");
+		System.out.println("\t tgthost <hostname:port>\t\t\t- address of the target server");
+		System.out.println("\t loghost <hostname:port>\t\t\t- address of the log server");
 		System.out.println("\t namespace <database.collection>\t- source collection namespace");
 		System.out.println("\t targetns <database.collection>\t\t- target collection namespace");
-		System.out.println("\t readSecondary <true/false>\t\t- use delayed secondaries for copy");
+		System.out.println("\t secondary <true/false>\t\t- use delayed secondaries for copy");
 		System.out.println("\t reshard <true/false>\t\t\t- shard target collection on copy");
 		System.out.println("\t key <shard key>\t\t\t- new shard key for clone");
 		System.out.println("\t readBatch <integer>\t\t\t- number of documents to read per batch");

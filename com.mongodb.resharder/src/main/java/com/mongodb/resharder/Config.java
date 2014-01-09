@@ -120,24 +120,28 @@ public class Config {
 
 	public static void processArgs(String[] args) {
 		for (int i = 0; i < args.length; i++) {
-			if (!args[i].equals("--console"))
-				setProperty(args[i].replaceAll("-", ""), args[++i]);
-			else
+			System.out.println(args[i]);
+			if (!args[i].equals("--console")) {
+				if (i + 1 < args.length) {
+					setProperty(args[i].replaceAll("-", ""), args[++i]);
+				}
+			} else {
 				_isCLI = true;
+			}
 		}
 
 		loadDefaults();
 	}
 
 	private static void loadDefaults() {
-		if (!_props.containsKey("source"))
-			setProperty("source", "localhost:27017");
+		if (!_props.containsKey("srchost"))
+			setProperty("srchost", "localhost:27017");
 
-		if (!_props.containsKey("target"))
-			setProperty("target", "localhost:27017");
+		if (!_props.containsKey("tgthost"))
+			setProperty("tgthost", "localhost:27017");
 
-		if (!_props.containsKey("log"))
-			setProperty("log", "localhost:28017");
+		if (!_props.containsKey("loghost"))
+			setProperty("loghost", "localhost:28017");
 
 		if (!_props.containsKey("namespace"))
 			setProperty("namespace", "test.grades");
@@ -145,8 +149,8 @@ public class Config {
 		if (!_props.containsKey("targetns"))
 			setProperty("targetns", "resharder.clone");
 
-		if (!_props.containsKey("readSecondary"))
-			setProperty("readSecondary", "true");
+		if (!_props.containsKey("secondary"))
+			setProperty("secondary", "true");
 
 		if (!_props.containsKey("reshard"))
 			setProperty("reshard", "true");
@@ -167,7 +171,7 @@ public class Config {
 
 		try {
 			switch (prop) {
-			case "source":
+			case "srchost":
 				_srcURI = new MongoClientURI("mongodb://" + val);
 				mongo = new MongoClient(_srcURI);
 
@@ -178,7 +182,7 @@ public class Config {
 				_props.put("source", val);
 				break;
 
-			case "target":
+			case "tgthost":
 				_tgtURI = new MongoClientURI("mongodb://" + val);
 				mongo = new MongoClient(_tgtURI);
 
@@ -190,7 +194,7 @@ public class Config {
 				_props.put("target", val);
 				break;
 
-			case "log":
+			case "loghost":
 				_logURI = new MongoClientURI("mongodb://" + val);
 				mongo = new MongoClient(_logURI);
 
@@ -205,7 +209,7 @@ public class Config {
 				_props.put("log", val);
 				break;
 
-			case "readSecondary":
+			case "secondary":
 				_secondary = Boolean.parseBoolean(val);
 				ret = "Secondary read set to " + val;
 				_props.put("readSecondary", val);

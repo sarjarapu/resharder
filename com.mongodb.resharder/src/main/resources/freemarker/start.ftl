@@ -257,9 +257,6 @@ function WindowLoad(event) {
     	var json = document.getElementById("json").innerHTML;
     	json = JSON.parse(json);
 	document.getElementById("json").innerHTML = JSON.stringify(json,null,2);
-
-	json = {"mongos":"${mongos}","shards":"${numShards}","replSets":"${numRepl}","servers":"${numServers}"};
-	document.getElementById("config").innerHTML = JSON.stringify(json,null,2);
 	
 	$('#frmReshard').click(
 					function() {
