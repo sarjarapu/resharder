@@ -29,6 +29,7 @@ public class Launcher {
 	public static void main(String[] args) throws IOException {
 		Config.processArgs(args);
 		System.setErr(new PrintStream("./err.log"));
+		spark.Spark.staticFileLocation("/freemarker");
 
 		if (Config.isCLI()) {
 			Shell.runCLI();
@@ -80,6 +81,28 @@ public class Launcher {
 				SimpleHash root = new SimpleHash();
 
 				template.process(root, writer);
+			}
+		});
+		
+		get(new FreemarkerBasedRoute("/getGraphHtml", "result.ftl") {
+			@Override
+			public void doHandle(Request request, Response response, Writer writer) throws IOException,
+					TemplateException {
+				SimpleHash hash = new SimpleHash();
+				hash.put("result", Node.getGraphHTML());
+
+				template.process(hash, writer);
+			}
+		});
+		
+		get(new FreemarkerBasedRoute("/getConnectionHtml", "result.ftl") {
+			@Override
+			public void doHandle(Request request, Response response, Writer writer) throws IOException,
+					TemplateException {
+				SimpleHash hash = new SimpleHash();
+				hash.put("result", Node.getConnectionHTML());
+
+				template.process(hash, writer);
 			}
 		});
 
@@ -170,26 +193,6 @@ public class Launcher {
 
 		});
 
-		get(new FreemarkerBasedRoute("/form.js", "form.js") {
-			@Override
-			protected void doHandle(Request request, Response response, Writer writer) throws IOException,
-					TemplateException {
-				template.process(new SimpleHash(), writer);
-
-			}
-
-		});
-
-		get(new FreemarkerBasedRoute("/jquery-2.0.3.min.js", "jquery-2.0.3.min.js") {
-			@Override
-			protected void doHandle(Request request, Response response, Writer writer) throws IOException,
-					TemplateException {
-				template.process(new SimpleHash(), writer);
-
-			}
-
-		});
-
 		get(new FreemarkerBasedRoute("getStatus", "status.ftl") {
 			@Override
 			protected void doHandle(Request request, Response response, Writer writer) throws IOException,
@@ -243,6 +246,13 @@ public class Launcher {
 				_ts = 0;
 
 				OpLogReader.shutdown();
+				
+				Config.init(null);
+				
+				Node node = new Node("resharder", "localhost", 2, 6);
+				new Node("loghost", Config.get_logDB().getMongo().getAddress().getHost() + ":"
+						+ Config.get_logDB().getMongo().getAddress().getPort(), 2, 18);
+				new Node("mongos", "localhost:27017", 30, 6);
 
 				template.process(ShardMapper.getShardingStatus(hash), writer);
 			}

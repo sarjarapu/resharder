@@ -12,6 +12,7 @@ import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.CommandResult;
 import com.mongodb.DBCursor;
+import com.mongodb.DBObject;
 
 public class Resharder implements Runnable {
 
@@ -151,8 +152,11 @@ public class Resharder implements Runnable {
 			_threads.add(new PerfCounters());
 
 			// Start a reader for each shard
-			MessageLog.push("Processing shard config...", "Launcher");
+			MessageLog.push("Processing shard config...", Resharder.class.getSimpleName());
 			for (Shard shard : shards) {
+				Config.get_nodes().update(new BasicDBObject("name", "monogs"),
+						new BasicDBObject("connections", new DBObject[0]));
+
 				shard.initReaders();
 			}
 

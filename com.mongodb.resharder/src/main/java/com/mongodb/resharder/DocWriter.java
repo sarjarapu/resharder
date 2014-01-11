@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 
 public class DocWriter implements Runnable {
@@ -13,6 +14,8 @@ public class DocWriter implements Runnable {
 
 	private static AtomicBoolean _running = new AtomicBoolean(false);
 	private static AtomicInteger _readers = new AtomicInteger(0);
+	
+	private String _host;
 	
 	public static void readerStarted() {
 		_readers.incrementAndGet();
@@ -43,6 +46,11 @@ public class DocWriter implements Runnable {
 			// collection object
 			Config.get_tgtCollection().getDB().requestStart();
 			Config.get_tgtCollection().getDB().requestEnsureConnection();
+
+			_host = Config.get_tgtCollection().getDB().getMongo().getAddress().getHost() + ":"
+					+ Config.get_tgtCollection().getDB().getMongo().getAddress().getPort();
+			_host = Config.get_nodes().findOne(new BasicDBObject("host", _host)).get("name").toString();
+			new Node(Config.get_nodes().findOne(new BasicDBObject("name", "resharder"))).addConnection(_host, "writer");
 
 			MessageLog.push("connected to " + Config.get_tgtCollection().getDB().getMongo().getConnectPoint(), this
 					.getClass().getSimpleName() + ".");
@@ -91,6 +99,8 @@ public class DocWriter implements Runnable {
 			MessageLog.push("disconnected from " + Config.get_tgtCollection().getDB().getMongo().getConnectPoint(), this
 					.getClass().getSimpleName() + ".");
 			Config.get_tgtCollection().getDB().requestDone();
+			new Node(Config.get_nodes().findOne(new BasicDBObject("name", "resharder"))).removeConnection(_host, "writer");
+			
 			shutdown();
 		}
 	}

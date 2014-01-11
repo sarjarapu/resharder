@@ -16,6 +16,7 @@ public class CollectionScanner implements Runnable {
 	private static AtomicBoolean _shutdown = new AtomicBoolean(false);
 	private int _numread = 0;
 	private Chunk _chunkTree;
+	private String _host;
 
 	public CollectionScanner(DBCollection source, Chunk root) {
 		this._source = source;
@@ -29,14 +30,21 @@ public class CollectionScanner implements Runnable {
 		// use the same socket for all reads
 		try {
 			_shutdown.set(false);
-			
+
 			_source.getDB().requestStart();
 			_source.getDB().requestEnsureConnection();
-			
-			MessageLog.push("connected to " + _source.getDB().getMongo().getConnectPoint() + ".", this.getClass().getSimpleName());
+
+			_host = _source.getDB().getMongo().getAddress().getHost() + ":"
+					+ _source.getDB().getMongo().getAddress().getPort();
+			_host = Config.get_nodes().findOne(new BasicDBObject("host", _host)).get("name").toString();
+			new Node(Config.get_nodes().findOne(new BasicDBObject("name", "resharder"))).addConnection(_host, "reader");
+
+			MessageLog.push("connected to " + _source.getDB().getMongo().getConnectPoint() + ".", this.getClass()
+					.getSimpleName());
 
 			while (_running && !_shutdown.get()) {
-				DBCursor cursor = _source.find().sort(new BasicDBObject("$natural", 1)).skip(_numread).limit(Config.get_readBatch());
+				DBCursor cursor = _source.find().sort(new BasicDBObject("$natural", 1)).skip(_numread)
+						.limit(Config.get_readBatch());
 
 				if (!cursor.hasNext()) {
 					MessageLog.push("Collection scan completed...", this.getClass().getSimpleName());
@@ -53,7 +61,8 @@ public class CollectionScanner implements Runnable {
 							// Put docs on queue
 							DocWriter.push(doc);
 						} else {
-							MessageLog.push("Orphan found. ShardKey: " + doc.get(_chunkTree.get_shardkey()) + " Shard: " + _chunkTree.get_shard(), this.getClass().getSimpleName());
+							MessageLog.push("Orphan found. ShardKey: " + doc.get(_chunkTree.get_shardkey())
+									+ " Shard: " + _chunkTree.get_shard(), this.getClass().getSimpleName());
 							Config.orphanDropped();
 						}
 						_numread++;
@@ -68,9 +77,13 @@ public class CollectionScanner implements Runnable {
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
+			new Node(Config.get_nodes().findOne(new BasicDBObject("name", "resharder"))).removeConnection(_host,
+					"reader");
+
 			_source.getDB().requestDone();
-			MessageLog.push("disconnected from " + _source.getDB().getMongo().getConnectPoint() + ".", this.getClass().getSimpleName());
-			
+			MessageLog.push("disconnected from " + _source.getDB().getMongo().getConnectPoint() + ".", this.getClass()
+					.getSimpleName());
+
 			DocWriter.readerStopped();
 			_shutdown.set(false);
 		}

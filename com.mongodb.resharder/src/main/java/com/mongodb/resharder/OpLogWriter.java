@@ -10,6 +10,7 @@ import com.mongodb.DBObject;
 public class OpLogWriter implements Runnable {
 	private static AtomicBoolean _running = new AtomicBoolean(false), _active = new AtomicBoolean(true);
 	private static AtomicInteger _processed = new AtomicInteger(0);
+	private String _host;
 
 	public static boolean isRunning() {
 		return _running.get();
@@ -18,7 +19,7 @@ public class OpLogWriter implements Runnable {
 	public static boolean isActive() {
 		return _active.get();
 	}
-	
+
 	public static void shutdown() {
 		_running.set(false);
 	}
@@ -32,6 +33,12 @@ public class OpLogWriter implements Runnable {
 			// use the same socket for all writes
 			Config.get_oplog().getDB().requestStart();
 			Config.get_oplog().getDB().requestEnsureConnection();
+
+			_host = Config.get_oplog().getDB().getMongo().getAddress().getHost() + ":"
+					+ Config.get_oplog().getDB().getMongo().getAddress().getPort();
+			_host = Config.get_nodes().findOne(new BasicDBObject("host", _host)).get("name").toString();
+			new Node(Config.get_nodes().findOne(new BasicDBObject("name", "resharder"))).addConnection(_host,
+					"oplogReplay");
 
 			MessageLog.push("connected to " + Config.get_oplog().getDB().getMongo().getConnectPoint(), this.getClass()
 					.getSimpleName() + ".");
@@ -87,10 +94,12 @@ public class OpLogWriter implements Runnable {
 			// close our connection
 			oplog.close();
 			Config.get_oplog().getDB().requestDone();
-			
+			new Node(Config.get_nodes().findOne(new BasicDBObject("name", "resharder"))).removeConnection(_host,
+					"oplogReplay");
+
 			MessageLog.push("disconnected from " + Config.get_tgtCollection().getDB().getMongo().getConnectPoint(),
 					this.getClass().getSimpleName() + ".");
-			
+
 			_running.set(false);
 		}
 	}

@@ -1,6 +1,7 @@
 package com.mongodb.resharder;
 
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,7 +17,7 @@ import com.mongodb.MongoClientURI;
 
 public class Config {
 	private static String _ns, _targetns, _reshardKey;
-	private static DBCollection _src, _tgt, _log, _oplog;
+	private static DBCollection _src, _tgt, _log, _oplog, _nodes;
 	private static DB _adminDB, _configDB, _logDB;
 	private static boolean _secondary = false, _reshard = false, _isCLI = false;
 	private static int _readBatch, _writeBatch;
@@ -48,6 +49,11 @@ public class Config {
 		_orphanCount.set(0);
 		_oplogCount.set(0);
 		_oplogReads.set(0);
+		
+		_nodes = _logDB.getCollection("nodes");
+		
+		if (props == null)
+			_nodes.drop();
 	}
 
 	public static boolean validate() {
@@ -328,5 +334,9 @@ public class Config {
 
 	public static boolean isCLI() {
 		return _isCLI;
+	}
+
+	public static DBCollection get_nodes() {
+		return _nodes;
 	}
 }

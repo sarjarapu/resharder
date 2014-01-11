@@ -28,9 +28,12 @@ public class ShardMapper {
 
 	// Connect to mongos and pull the shard configuration
 	public static SimpleHash getShardingStatus(SimpleHash hash) {
-
 		_shards = new ArrayList<Shard>();
-		Config.init(null);
+
+		// load a data structure for the UI graph
+		Node node = new Node(Config.get_nodes().findOne(new BasicDBObject("name", "resharder")));
+		node.addConnection("mongos", "mapper");
+		node.addConnection("loghost", "logger");
 
 		List<String> _collections = new ArrayList<String>();
 
@@ -50,21 +53,40 @@ public class ShardMapper {
 			hash.put("numShards", shards.size());
 		}
 
+		// TODO - move calculating the graph locs to the Node class
+		// Create some offsets for the UI graph
+		int x = 15, y = 18;
 		for (DBObject shard : shards) {
 			String servers = shard.get("host").toString();
 
 			String[] hosts = servers.split(",");
+			String replSet = "";
 
-			if (hosts[0].contains("/"))
+			if (hosts[0].contains("/")) {
+				replSet = hosts[0].split("/")[0] + "-";
 				hosts[0] = hosts[0].split("/")[1];
+			}
 
 			List<ServerAddress> addrs = new ArrayList<ServerAddress>();
 
 			try {
+				int i = 1;
 				for (String host : hosts) {
+					if (i == 1)
+						new Node(Config.get_nodes().findOne(new BasicDBObject("name", "mongos"))).addConnection(replSet
+								+ "Host" + i, "");
+
+					if (!Config.get_nodes().find(new BasicDBObject("name", replSet + "Host" + i)).hasNext())
+						new Node(replSet + "Host" + i, host, x, y);
+
 					String[] addr = host.split(":");
 					addrs.add(new ServerAddress(addr[0], Integer.parseInt(addr[1])));
+
+					y += 6;
+					i++;
 				}
+
+				y -= --i * 6;
 			} catch (UnknownHostException e) {
 				return null;
 			}
@@ -78,6 +100,8 @@ public class ShardMapper {
 
 			shard.put("hosts", hosts);
 			shard.removeField("host");
+
+			x += 12;
 		}
 
 		_shardconf.put("shards", shards);
@@ -171,6 +195,11 @@ public class ShardMapper {
 				dbCursor.close();
 			if (collectionCursor != null)
 				collectionCursor.close();
+		}
+
+		if (hash != null) {
+			hash.put("connectionHTML", Node.getConnectionHTML());
+			hash.put("graphHTML", Node.getGraphHTML());
 		}
 
 		return hash;

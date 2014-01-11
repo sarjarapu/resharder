@@ -19,6 +19,7 @@ public class OpLogReader implements Runnable {
 	private BSONTimestamp _ts;
 	private DBCollection _oplog = null;
 	private DBCursor _cursor;
+	private String _host;
 
 	public OpLogReader(DBCollection oplog) {
 		this._oplog = oplog;
@@ -28,17 +29,17 @@ public class OpLogReader implements Runnable {
 	public void setTimestamp(BSONTimestamp ts) {
 		this._ts = ts;
 	}
-	
+
 	public void killCursor() {
 		_cursor.close();
 	}
-	
+
 	public static void shutdown() {
 		_running.set(false);
 		for (OpLogReader reader : _readers) {
 			reader.killCursor();
 		}
-		
+
 		_readers = new ArrayList<OpLogReader>();
 	}
 
@@ -57,8 +58,14 @@ public class OpLogReader implements Runnable {
 			MessageLog.push("outputting to " + Config.get_oplog().getDB().getMongo().getConnectPoint() + ".", this
 					.getClass().getSimpleName());
 
-			_cursor = _oplog.find(new BasicDBObject("ns", "test.grades"))
-					.sort(new BasicDBObject("$natural", -1)).limit(1);
+			_host = _oplog.getDB().getMongo().getAddress().getHost() + ":"
+					+ _oplog.getDB().getMongo().getAddress().getPort();
+			_host = Config.get_nodes().findOne(new BasicDBObject("host", _host)).get("name").toString();
+			new Node(Config.get_nodes().findOne(new BasicDBObject("name", "resharder"))).addConnection(_host,
+					"oplogTail");
+
+			_cursor = _oplog.find(new BasicDBObject("ns", "test.grades")).sort(new BasicDBObject("$natural", -1))
+					.limit(1);
 
 			if (_cursor.hasNext()) {
 				DBObject doc = _cursor.next();
@@ -87,8 +94,12 @@ public class OpLogReader implements Runnable {
 					_cursor.close();
 				MessageLog.push("disconnected from " + _oplog.getDB().getMongo().getConnectPoint() + ".", this
 						.getClass().getSimpleName());
+
 				_oplog.getDB().requestDone();
 				Config.get_oplog().getDB().requestDone();
+
+				new Node(Config.get_nodes().findOne(new BasicDBObject("name", "resharder"))).removeConnection(_host,
+						"oplogTail");
 			}
 		}
 	}

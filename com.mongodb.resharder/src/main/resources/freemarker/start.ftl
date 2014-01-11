@@ -5,11 +5,14 @@
 
 
 
+
 <meta content="text/html; charset=ISO-8859-1" http-equiv="content-type"><title>MongoDB Resharder</title>
   
 
   
-  <link rel="stylesheet" type="text/css" href="/styles.css">
+  <link rel="stylesheet" type="text/css" href="/styles.css">		
+        <link rel="stylesheet" href="graph.css">		
+        <link rel="stylesheet" href="graph1.css">
   
 
   
@@ -41,13 +44,17 @@
 </style></head><body>
 
 <div id="messages" class="messageLog" style="display: none;"></div>
+<div id="graphUpdate" class="graphUpdate" style="display: none;">true</div>
 <div id="counters" class="counterClass" style="display: none;"></div>
 <div id="synch" class="synchClass" style="display: none;"></div>
 <div id="counterVals" class="counterVals" style="display: none;">${data}</div>
+<div id="connectionHTML" class="connectionHTML" style="display: none;">${connectionHTML}</div>
 <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js?lang=css&amp;skin=sunburst">
 </script>
 
 <script src="/jquery-2.0.3.min.js"> </script>
+<script src="/jquery-ui.min.js"></script>
+<script src="/jquery.jsPlumb-1.5.5-min.js"></script>
 <script src="/form.js"></script>
 
 <table style="text-align: left; width: 100%; margin-left: auto; margin-right: auto;" border="0" cellpadding="0" cellspacing="0">
@@ -83,7 +90,7 @@ Resharder<br>
       </td>
     </tr>
     <tr>
-      <td style="vertical-align: top; text-align: center;">
+      <td colspan="1" rowspan="3" style="vertical-align: top; text-align: center;">
       <table style="text-align: left; width: 100%; margin-left: auto; margin-right: auto;" border="0" cellpadding="0" cellspacing="0">
         <tbody>
           <tr>
@@ -95,9 +102,7 @@ Resharder<br>
           </tr>
           <tr>
             <td colspan="2" rowspan="1">
-          <div id="perfGraph" name="perfGraph">
-            <pre id="config" class="prettyprint"><br></pre>
-          </div>
+          <div id="perfGraph" name="perfGraph"></div>
             <br>
             </td>
           </tr>
@@ -123,6 +128,10 @@ Status</td>
         </tbody>
       </table>
       <br>
+      
+      <br>
+      <br>
+
       </td>
       <td style="vertical-align: top;"><br>
       </td>
@@ -145,11 +154,10 @@ Collection<br>
             </tr>
             <tr>
               <td colspan="1" rowspan="8" style="vertical-align: top; text-align: left;">
-              <#list collList as coll>
               
+              <#list collList as coll>
               <p><input name="namespace" id="frmNamespace" value="${coll}" type="radio">${coll}
               </p>
-
               </#list><br>
 
               </td>
@@ -217,19 +225,27 @@ Collection<br>
       </td>
     </tr>
     <tr>
-      <td style="vertical-align: top;"><br>
-      </td>
+      
       <td style="vertical-align: top;">
-<div class="status" id="term"></div>
-      <br>
+    <br>
 </td>
     </tr>
     <tr>
+      
       <td><br>
       </td>
-      <td><br>
-      </td>
-      <td><br>
+      <td style="text-align: left; vertical-align: top;">
+		
+      <div id="main">			          
+            <div class="explanation">
+                <h4>WORKFLOW STATE</h4>
+            </div>  
+            <div class="demo statemachine-demo" id="statemachine-demo">
+            <div id="graphHTML" class="graphHTML">
+					${graphHTML}  
+			</div>                       
+            </div>
+      </div>
       </td>
     </tr>
     <tr>
