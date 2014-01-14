@@ -61,8 +61,6 @@ public class CollectionScanner implements Runnable {
 							// Put docs on queue
 							DocWriter.push(doc);
 						} else {
-							MessageLog.push("Orphan found. ShardKey: " + doc.get(_chunkTree.get_shardkey())
-									+ " Shard: " + _chunkTree.get_shard(), this.getClass().getSimpleName());
 							Config.orphanDropped();
 						}
 						_numread++;

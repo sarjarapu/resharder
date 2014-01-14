@@ -6,6 +6,7 @@
 
 
 
+
 <meta content="text/html; charset=ISO-8859-1" http-equiv="content-type"><title>MongoDB Resharder</title>
   
 
@@ -60,33 +61,13 @@
 <table style="text-align: left; width: 100%; margin-left: auto; margin-right: auto;" border="0" cellpadding="0" cellspacing="0">
   <tbody>
     <tr>
+      <td style="vertical-align: top; text-align: center;"><br>
+      </td>
+    </tr>
+    <tr>
       <td colspan="3" rowspan="1" style="vertical-align: top; text-align: center;"><big><big><big>MongoDB
-Resharder<br>
-      </big></big></big><br>
-      </td>
-    </tr>
-    <tr>
-      <td style="vertical-align: top;"><br>
-      </td>
-      <td style="vertical-align: top; width: 25px;"><br>
-      </td>
-      <td style="vertical-align: top;"><br>
-      </td>
-    </tr>
-    <tr>
-      <td style="vertical-align: top; text-align: center;"><br>
-      </td>
-      <td style="vertical-align: top;"><br>
-      </td>
-      <td style="vertical-align: top;"><br>
-      </td>
-    </tr>
-    <tr>
-      <td style="vertical-align: top; text-align: center;"><br>
-      </td>
-      <td style="vertical-align: top;"><br>
-      </td>
-      <td style="vertical-align: top; text-align: center;"><br>
+Resharder
+      </big></big></big>
       </td>
     </tr>
     <tr>
@@ -94,31 +75,22 @@ Resharder<br>
       <table style="text-align: left; width: 100%; margin-left: auto; margin-right: auto;" border="0" cellpadding="0" cellspacing="0">
         <tbody>
           <tr>
-            <td colspan="2" rowspan="1" style="vertical-align: top; text-align: center;">
-          <div id="perfTitle" name="perfTitle">
-          Shard Configuration
-          </div>
-          </td>
-          </tr>
-          <tr>
             <td colspan="2" rowspan="1">
-          <div id="perfGraph" name="perfGraph"></div>
             <br>
             </td>
           </tr>
           <tr>
-            <td><br>
+            <td colspan="2" rowspan="1" style="vertical-align: top; text-align: center;">
+            <br>
+            <br>
+<br>
             </td>
-            <td style="vertical-align: top;"><br>
-            </td>
-          </tr>
-          <tr>
-            <td colspan="2" rowspan="1" style="vertical-align: top; text-align: center;">Sharding
-Status</td>
           </tr>
           <tr>
             <td colspan="2" rowspan="1" style="vertical-align: top;">
-            <div id="perfCounters" name="perfCounters">
+          	<div id="statusDiv" name="statusDiv"></div>
+            <div id="perfCounters" name="perfCounters"></div>
+            <div id="perfGraph" name="perfGraph">
             <pre id="json" class="prettyprint">${collections}</pre>
             </div>
             <br>
@@ -127,17 +99,31 @@ Status</td>
           </tr>
         </tbody>
       </table>
-      <br>
+	  </td>
+      <td colspan="2" rowspan="2" style="text-align: left; vertical-align: top;">
+		
+      <div id="main">			          
+            <div class="explanation">
+                <h4>WORKFLOW STATE</h4>
+            </div>  
+            <div class="demo statemachine-demo" id="statemachine-demo">
+            <div id="graphHTML" class="graphHTML">
+					${graphHTML}  
+			</div>                       
+            </div>
+      </div>
+      </td>
+    </tr>
+    <tr>
       
-      <br>
-      <br>
-
-      </td>
-      <td style="vertical-align: top;"><br>
-      </td>
-      <td colspan="1" rowspan="2" style="vertical-align: top; text-align: center;" height="30%" width="50%">
+      <td style="vertical-align: top;">
+    <br>
+</td>
+    </tr>
+    <tr>
+    <td colspan="1" rowspan="2" style="vertical-align: top; text-align: center;" height="30%" width="50%">
       <div id="formDiv">
-      <form name="reshard" action="">
+      <form name="reshard" action="" style="position: relative; left: 10em; text-align: center;">
         <table style="width: 512px; height: 294px;">
           <tbody>
             <tr>
@@ -221,30 +207,6 @@ Collection<br>
           </tbody>
         </table>
       </form>
-      </div>
-      </td>
-    </tr>
-    <tr>
-      
-      <td style="vertical-align: top;">
-    <br>
-</td>
-    </tr>
-    <tr>
-      
-      <td><br>
-      </td>
-      <td style="text-align: left; vertical-align: top;">
-		
-      <div id="main">			          
-            <div class="explanation">
-                <h4>WORKFLOW STATE</h4>
-            </div>  
-            <div class="demo statemachine-demo" id="statemachine-demo">
-            <div id="graphHTML" class="graphHTML">
-					${graphHTML}  
-			</div>                       
-            </div>
       </div>
       </td>
     </tr>

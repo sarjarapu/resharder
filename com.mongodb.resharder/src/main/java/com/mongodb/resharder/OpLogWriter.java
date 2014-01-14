@@ -34,8 +34,9 @@ public class OpLogWriter implements Runnable {
 			Config.get_oplog().getDB().requestStart();
 			Config.get_oplog().getDB().requestEnsureConnection();
 
-			_host = Config.get_oplog().getDB().getMongo().getAddress().getHost() + ":"
-					+ Config.get_oplog().getDB().getMongo().getAddress().getPort();
+			//set host name and create edge for UI graph
+			_host = Config.get_tgtCollection().getDB().getMongo().getAddress().getHost() + ":"
+					+ Config.get_tgtCollection().getDB().getMongo().getAddress().getPort();
 			_host = Config.get_nodes().findOne(new BasicDBObject("host", _host)).get("name").toString();
 			new Node(Config.get_nodes().findOne(new BasicDBObject("name", "resharder"))).addConnection(_host,
 					"oplogReplay");
@@ -94,6 +95,8 @@ public class OpLogWriter implements Runnable {
 			// close our connection
 			oplog.close();
 			Config.get_oplog().getDB().requestDone();
+			
+			// remove edge from UI graph
 			new Node(Config.get_nodes().findOne(new BasicDBObject("name", "resharder"))).removeConnection(_host,
 					"oplogReplay");
 
@@ -101,6 +104,7 @@ public class OpLogWriter implements Runnable {
 					this.getClass().getSimpleName() + ".");
 
 			_running.set(false);
+			_active.set(true);
 		}
 	}
 }

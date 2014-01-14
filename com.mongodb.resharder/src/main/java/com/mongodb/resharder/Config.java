@@ -1,7 +1,6 @@
 package com.mongodb.resharder;
 
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,13 +18,14 @@ public class Config {
 	private static String _ns, _targetns, _reshardKey;
 	private static DBCollection _src, _tgt, _log, _oplog, _nodes;
 	private static DB _adminDB, _configDB, _logDB;
-	private static boolean _secondary = false, _reshard = false, _isCLI = false;
+	private static boolean _secondary = false, _reshard = false, _isCLI = false, _done = false;
 	private static int _readBatch, _writeBatch;
 	private static Map<String, List<Chunk>> _chunks = new HashMap<String, List<Chunk>>();
 	private static AtomicLong _docCount = new AtomicLong(0), _orphanCount = new AtomicLong(0),
 			_oplogCount = new AtomicLong(0), _oplogReads = new AtomicLong(0);
 	private static MongoClientURI _srcURI, _tgtURI, _logURI;
 	private static Map<String, String> _props = new HashMap<String, String>();
+	private static long _ts = 0, _lastDocPerSec, _lastOrphanPerSec;
 
 	public static void init(Map<String, String> props) {
 
@@ -34,6 +34,9 @@ public class Config {
 		if (OpLogWriter.isRunning()) {
 			MessageLog.push("ERROR:, clone operation in progress.", Config.class.getSimpleName());
 		}
+		
+		_done = false;
+		_ts = 0;
 
 		if (props != null) {
 			for (Entry<String, String> prop : props.entrySet()) {
@@ -54,6 +57,7 @@ public class Config {
 		
 		if (props == null)
 			_nodes.drop();
+		
 	}
 
 	public static boolean validate() {
@@ -90,6 +94,34 @@ public class Config {
 		map.put("orphanCount", new Long(_orphanCount.get()));
 		map.put("oplogCount", new Long(_oplogCount.get()));
 		map.put("oplogReads", new Long(_oplogReads.get()));
+
+		if (_ts > 0) {
+			long secs = ((System.currentTimeMillis() - _ts) / 1000);
+			if (secs == 0) {
+				secs = 1;
+			}
+
+			if (DocWriter.get_running()) {
+				map.put("docsPerSec", map.get("docCount") / secs);
+				map.put("orphansPerSec", map.get("orphanCount") / secs);
+				_lastDocPerSec = map.get("docsPerSec");
+				_lastOrphanPerSec = map.get("orphansPerSec");
+			} else {
+				map.put("docsPerSec", _lastDocPerSec);
+				map.put("orphansPerSec", _lastOrphanPerSec);
+			}
+
+			map.put("oplogsPerSec", map.get("oplogCount") / secs);
+
+		} else {
+			map.put("docsPerSec", new Long(0));
+			map.put("orphansPerSec", new Long(0));
+			map.put("oplogsPerSec", new Long(0));
+			map.put("oplogReads", new Long(0));
+
+			if (map.get("docCount") > 0)
+				_ts = System.currentTimeMillis();
+		}
 
 		return map;
 	}
@@ -194,7 +226,6 @@ public class Config {
 
 				String[] params = _targetns.split("\\.");
 				_tgt = mongo.getDB(params[0]).getCollection(params[1]);
-				_tgt.drop();
 
 				ret = "Target host set to " + val;
 				_props.put("target", val);
@@ -338,5 +369,13 @@ public class Config {
 
 	public static DBCollection get_nodes() {
 		return _nodes;
+	}
+
+	public static boolean isDone() {
+		return _done;
+	}
+
+	public static void done(boolean done) {
+		Config._done = done;
 	}
 }

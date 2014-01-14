@@ -40,6 +40,8 @@ public class Resharder implements Runnable {
 
 		MessageLog.push("Clone/Reshard completed.  namespace: " + Config.get_TargetNamepace(),
 				Resharder.class.getSimpleName());
+		
+		Config.done(true);
 	}
 
 	public Resharder() {
@@ -89,6 +91,7 @@ public class Resharder implements Runnable {
 	public void run() {
 		try {
 			CommandResult result;
+			Config.get_tgtCollection().drop();
 
 			// Tell balancer not to run
 			result = Config.get_adminDB().doEval(

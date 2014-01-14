@@ -83,7 +83,7 @@ public class Launcher {
 				template.process(root, writer);
 			}
 		});
-		
+
 		get(new FreemarkerBasedRoute("/getGraphHtml", "result.ftl") {
 			@Override
 			public void doHandle(Request request, Response response, Writer writer) throws IOException,
@@ -94,7 +94,7 @@ public class Launcher {
 				template.process(hash, writer);
 			}
 		});
-		
+
 		get(new FreemarkerBasedRoute("/getConnectionHtml", "result.ftl") {
 			@Override
 			public void doHandle(Request request, Response response, Writer writer) throws IOException,
@@ -113,8 +113,8 @@ public class Launcher {
 
 				if (!DocWriter.get_running()) {
 					try {
-						Map<String, String> map = new HashMap<String,String>();
-						
+						Map<String, String> map = new HashMap<String, String>();
+
 						map.put("namespace", request.queryParams("namespace"));
 						map.put("targetns", request.queryParams("targetns"));
 						map.put("readBatch", request.queryParams("readBatch"));
@@ -125,7 +125,7 @@ public class Launcher {
 						map.put("srchost", request.queryParams("srchost"));
 						map.put("tgthost", request.queryParams("tgthost"));
 						map.put("loghost", request.queryParams("loghost"));
-						
+
 						Config.init(map);
 
 						_tp.execute(new Resharder());
@@ -149,30 +149,9 @@ public class Launcher {
 				hash.put("docCount", map.get("docCount"));
 				hash.put("orphanCount", map.get("orphanCount"));
 				hash.put("oplogCount", map.get("oplogCount"));
-
-				if (_ts > 0) {
-					long secs = ((System.currentTimeMillis() - _ts) / 1000);
-					if (secs == 0) {
-						secs = 1;
-					}
-
-					if (DocWriter.get_running()) {
-						hash.put("docsPerSec", map.get("docCount") / secs);
-						hash.put("orphansPerSec", map.get("orphanCount") / secs);
-					} else {
-						hash.put("docsPerSec", 0);
-						hash.put("orphansPerSec", 0);
-					}
-
-					hash.put("oplogsPerSec", map.get("oplogCount") / secs);
-
-				} else {
-					hash.put("docsPerSec", 0);
-					hash.put("orphansPerSec", 0);
-					hash.put("oplogsPerSec", 0);
-
-					_ts = System.currentTimeMillis();
-				}
+				hash.put("docsPerSec", map.get("docsPerSec"));
+				hash.put("orphansPerSec", map.get("orphansPerSec"));
+				hash.put("oplogsPerSec", map.get("orphansPerSec"));
 
 				template.process(hash, writer);
 
@@ -210,7 +189,14 @@ public class Launcher {
 			protected void doHandle(Request request, Response response, Writer writer) throws IOException,
 					TemplateException {
 				SimpleHash hash = new SimpleHash();
-				hash.put("result", OpLogWriter.isActive() ? "true" : "false");
+
+				if (Config.isDone()) {
+					hash.put("result", "done");
+					Config.done(false);
+				}
+				else
+					hash.put("result", OpLogWriter.isActive() ? "true" : "false");
+				
 				template.process(hash, writer);
 			}
 		});
@@ -223,7 +209,7 @@ public class Launcher {
 				hash.put("result", "true");
 
 				try {
-					Resharder.shutdown();
+					_tp.execute(new Shutdown());
 				} catch (Exception e) {
 					MessageLog.push("ERROR: " + e.getMessage(), this.getClass().getSimpleName());
 					e.printStackTrace();
@@ -246,10 +232,10 @@ public class Launcher {
 				_ts = 0;
 
 				OpLogReader.shutdown();
-				
+
 				Config.init(null);
-				
-				Node node = new Node("resharder", "localhost", 2, 6);
+
+				new Node("resharder", "localhost", 2, 6);
 				new Node("loghost", Config.get_logDB().getMongo().getAddress().getHost() + ":"
 						+ Config.get_logDB().getMongo().getAddress().getPort(), 2, 18);
 				new Node("mongos", "localhost:27017", 30, 6);

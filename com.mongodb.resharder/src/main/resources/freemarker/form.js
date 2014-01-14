@@ -5,10 +5,6 @@ var auto_refresh = setInterval(function() {
 				document.getElementById("term").innerHTML += data
 			
 			document.getElementById('term').scrollTop = document.getElementById('term').scrollHeight;
-				
-			if (data.indexOf("10 seconds") > 0) {
-				// TODO collections are synced so make the stop button visible
-			}
 		});
 		
 		$('.counterClass').load('/getCounters', function(data) {
@@ -17,6 +13,10 @@ var auto_refresh = setInterval(function() {
 		
 		$('.synchClass').load('/isActive', function(data) {
 			document.getElementById("synch").innerHTML = data;
+
+			if (data.localeCompare("done") == 0) {
+				clearInterval(auto_refresh);
+			}
 			
 			if (data.localeCompare("false") == 0) {
 				$('#synchDiv').html("OpLog replay is synchronized.  Disconnect data writers and then hit STOP.<br><button type='submit' name='submit' class='stopButton' id='stop_btn' value='Submit'>STOP</button><br>");
@@ -26,7 +26,8 @@ var auto_refresh = setInterval(function() {
 						url : "/end",
 						success : function() {
 							$('#synchDiv').hide();
-							clearInterval(auto_refresh);
+							$('#perfGraph').html("");
+							$('#synchDiv').html("Reshard/Clone operation complete, thank you for riding.  Have a nice day.");
 						}
 					});	
 				});
@@ -109,7 +110,6 @@ var windows;
 		// would recommend you do. Note also here that we use the 'filter' option to tell jsPlumb
 		// which parts of the element should actually respond to a drag start.
 		instance.makeSource(windows, {
-			filter:".ep",				// only supported by jquery
 			anchor:"Continuous",
 			connector:[ "StateMachine", { curviness:20 } ],
 			connectorStyle:{ strokeStyle:"#5c96bc", lineWidth:1, outlineColor:"transparent", outlineWidth:2 },
@@ -143,12 +143,15 @@ $(function() {
 						var reshard = $("input#frmReshard").val();
 						var key = $("input#frmKey").val();
 						var secondary = $("input#cbxSecondary").val();
-
-						$('#formDiv').html("<div id='container' style='min-width: 310px; height: 300px; margin: 0 auto'></div><br><div id='synchDiv'></div><br>");
 						
-						$('#perfTitle').html("Clone/Reshard Progress");
-						$('#perfGraph').html("<div id='term' class='console'></div>");
+						$("#formDiv").html("<div id='synchDiv'></div>");
+
+						$('#perfGraph').html("<div id='container' style='min-width: 310px; height: 300px; margin: 0 auto'></div>");
+						
+						//$('#perfTitle').html("Clone/Reshard Progress");
+						$('#statusDiv').html("<div id='term' class='console'></div>");
 						$('#perfCounters').html("<div id='monitor' class='consoleSmall'</div><br>");
+						
 						
 
 						var dataString = "namespace=" + ns + "&targetns="
@@ -157,6 +160,14 @@ $(function() {
 								+ srchost + "&tgthost=" + tgthost + "&loghost="
 								+ loghost + "&reshard=" + reshard + "&key="
 								+ key + "&secondary=" + secondary;
+						
+						var msg = "WARNING - You are about to initate a cloning operation that ";
+						if (secondary.localeCompare("true") == 0) {
+							msg += "will cause a disruption in connectivity.  You should close all connections to " + ns + " and restart all mongos instances once document migration starts.  The clone operation ";
+						}
+						msg += " will place significant load on both the source and target infrastructure.  Confirm?";
+						
+						confirm(msg);
 
 						$.ajax({
 							type : "GET",
