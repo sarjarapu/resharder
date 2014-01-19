@@ -26,8 +26,7 @@ var auto_refresh = setInterval(function() {
 						url : "/end",
 						success : function() {
 							$('#synchDiv').hide();
-							$('#perfGraph').html("");
-							$('#synchDiv').html("Reshard/Clone operation complete, thank you for riding.  Have a nice day.");
+							$('#container').hide();
 						}
 					});	
 				});
@@ -144,14 +143,20 @@ $(function() {
 						var key = $("input#frmKey").val();
 						var secondary = $("input#cbxSecondary").val();
 						
-						$("#formDiv").html("<div id='synchDiv'></div>");
+						var msg = "WARNING - You are about to initate a cloning operation that ";
+						if (secondary.localeCompare("true") == 0) {
+							msg += "will cause a disruption in connectivity.  You should close all connections to " + ns + " and restart all mongos instances once document migration starts.  The clone operation ";
+						}
+						msg += " will place significant load on both the source and target infrastructure.  Confirm?";
+						
+						if (confirm(msg) == false)
+							return;
+						
+						$("#formDiv").html("<div id='synchDiv' style='position:absolute; left:100px; width:600px;'></div>");
 
-						$('#perfGraph').html("<div id='container' style='min-width: 310px; height: 300px; margin: 0 auto'></div>");
-						
-						//$('#perfTitle').html("Clone/Reshard Progress");
-						$('#statusDiv').html("<div id='term' class='console'></div>");
-						$('#perfCounters').html("<div id='monitor' class='consoleSmall'</div><br>");
-						
+						$('#perfGraph').html("<div id='term' class='console' style='position:absolute; top:30px; left:50px; min-width:750px;'></div>" + 
+								"<div id='monitor' class='consoleSmall' style='position:absolute; top:430px; left:50px; min-width:750px;'></div>" + 
+								"<div id='container' style='position:absolute; top:580px; left:50px; min-width: 750px; height: 300px; margin: 0 auto'></div>");
 						
 
 						var dataString = "namespace=" + ns + "&targetns="
@@ -160,14 +165,6 @@ $(function() {
 								+ srchost + "&tgthost=" + tgthost + "&loghost="
 								+ loghost + "&reshard=" + reshard + "&key="
 								+ key + "&secondary=" + secondary;
-						
-						var msg = "WARNING - You are about to initate a cloning operation that ";
-						if (secondary.localeCompare("true") == 0) {
-							msg += "will cause a disruption in connectivity.  You should close all connections to " + ns + " and restart all mongos instances once document migration starts.  The clone operation ";
-						}
-						msg += " will place significant load on both the source and target infrastructure.  Confirm?";
-						
-						confirm(msg);
 
 						$.ajax({
 							type : "GET",

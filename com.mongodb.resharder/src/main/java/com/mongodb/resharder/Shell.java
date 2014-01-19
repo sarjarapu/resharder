@@ -5,6 +5,7 @@ import asg.cliche.ShellFactory;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.util.Scanner;
 
 public class Shell {
 
@@ -42,6 +43,22 @@ public class Shell {
 	@Command
 	public void execute() throws UnknownHostException {
 		Config.init(null);
+		
+		String msg = "WARNING - You are about to initate a cloning operation that ";
+		if (Config.is_readSecondary()) {
+			msg += "will cause a disruption in connectivity.  You should close all connections to " + Config.get_TargetNamepace() + " and restart all mongos instances once document migration starts.  The clone operation ";
+		}
+		msg += " will place significant load on both the source and target infrastructure.";
+		
+		Scanner scan = new Scanner(System.in);
+		
+		System.out.println(msg);
+		
+		String confirm = "";
+		while (!confirm.equals("Y") && !confirm.equals("N")) {
+			if (scan.nextLine().equals("N"))
+				return;
+		}
 		
 		if (Config.validate()) {
 			System.out.println("Executing...");
