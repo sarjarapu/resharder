@@ -24,7 +24,6 @@ import freemarker.template.TemplateException;
 public class Launcher {
 	private final Configuration _cfg;
 	public static ScheduledExecutorService _tp = Executors.newScheduledThreadPool(25);
-	private long _ts = 0;
 
 	public static void main(String[] args) throws IOException {
 		Config.processArgs(args);
@@ -228,8 +227,6 @@ public class Launcher {
 
 				// set initial perf counter values
 				hash.put("data", PerfCounters.getRateCounters());
-
-				_ts = 0;
 
 				OpLogReader.shutdown();
 

@@ -9,7 +9,6 @@ import com.mongodb.DBObject;
 public class PerfCounters implements Runnable {
 	private static AtomicBoolean _running = new AtomicBoolean(false);
 	private static DBObject _rates = new BasicDBObject("docs", 0).append("oplogs", 0).append("orphans", 0);
-	private long _lastDocPerSec, _lastOrphanPerSec;
 
 	private long _docs, _oplogs, _orphans, _oplogReads, _ts = System.currentTimeMillis();
 
