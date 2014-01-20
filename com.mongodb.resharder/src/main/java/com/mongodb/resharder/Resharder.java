@@ -41,6 +41,8 @@ public class Resharder implements Runnable {
 		MessageLog.push("Clone/Reshard completed.  namespace: " + Config.get_TargetNamepace(),
 				Resharder.class.getSimpleName());
 		
+		Thread.sleep(2000);
+		
 		Config.done(true);
 	}
 
@@ -156,10 +158,11 @@ public class Resharder implements Runnable {
 
 			// Start a reader for each shard
 			MessageLog.push("Processing shard config...", Resharder.class.getSimpleName());
+			
+			Config.get_nodes().update(new BasicDBObject("name", "mongos"),
+					new BasicDBObject("$set", new BasicDBObject("connections", new DBObject[0])));
+			
 			for (Shard shard : shards) {
-				Config.get_nodes().update(new BasicDBObject("name", "monogs"),
-						new BasicDBObject("connections", new DBObject[0]));
-
 				shard.initReaders();
 			}
 

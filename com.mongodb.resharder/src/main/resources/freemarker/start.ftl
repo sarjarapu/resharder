@@ -4,18 +4,21 @@
   <meta content="text/html; charset=ISO-8859-1" http-equiv="content-type">
   <title>MongoDB Resharder</title>
 
-  
-  
-  <link rel="stylesheet" type="text/css" href="/styles.css">
 
   
   <link rel="stylesheet" href="graph.css">
-
-  
   <link rel="stylesheet" href="graph1.css">
+  <link rel="stylesheet" type="text/css" href="jquery-ui-1.10.4.custom.min.css">
 
   
   <style type="text/css">
+  .ui-dialog-osx {
+    -moz-border-radius: 0 0 8px 8px;
+    -webkit-border-radius: 0 0 8px 8px;
+    border-radius: 0 0 8px 8px; border-width: 0 8px 8px 8px;
+    font: normal normal normal 10px/1.5 Arial, Helvetica, sans-serif;
+}
+
 .console {
   font-family:Courier;
  color: #CCCCCC;
@@ -153,10 +156,20 @@ Key<br>
 </form>
 </div>
 
+<div id="dialog-message" title="Collection Synchronized">
+    <span class="ui-state-default"><span class="ui-icon ui-icon-info" style="float:left; margin:0 7px 0 0;"></span></span>
+    <div style="margin-left: 23px;">
+        <p>
+            The target collection is now synchronized.
+            <br /><br />
+            Click STOP to terminate the Oplog Readers and reset the shard configuration.<br /><br />
+        </p></div>
+</div>
+
 <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js?lang=css&amp;skin=sunburst">
 </script>
 <script src="/jquery-2.0.3.min.js"> </script>
-<script src="/jquery-ui.min.js"></script>
+<script src="/jquery-ui-1.10.4.custom.min.js"></script>
 <script src="/jquery.jsPlumb-1.5.5-min.js"></script>
 <script src="/form.js"></script>
 <script type="text/javascript">

@@ -74,7 +74,7 @@ public class Shard {
 
 		String target = oplogClient.getAddress().getHost() + ":" + oplogClient.getAddress().getPort();
 		target = Config.get_nodes().findOne(new BasicDBObject("host", target)).get("name").toString();
-
+		
 		new Node(Config.get_nodes().findOne(new BasicDBObject("name", "mongos"))).addConnection(target, "");
 
 		oplogClient.getDB("admin").requestDone();

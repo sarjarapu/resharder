@@ -15,21 +15,12 @@ var auto_refresh = setInterval(function() {
 			document.getElementById("synch").innerHTML = data;
 
 			if (data.localeCompare("done") == 0) {
-				clearInterval(auto_refresh);
+				setTimeout(function(){clearInterval(auto_refresh);},3000);
 			}
 			
-			if (data.localeCompare("false") == 0) {
-				$('#synchDiv').html("OpLog replay is synchronized.  Disconnect data writers and then hit STOP.<br><button type='submit' name='submit' class='stopButton' id='stop_btn' value='Submit'>STOP</button><br>");
-				$('.stopButton').click(function() {
-					$.ajax({
-						type : "POST",
-						url : "/end",
-						success : function() {
-							$('#synchDiv').hide();
-							$('#container').hide();
-						}
-					});	
-				});
+			if (data.localeCompare("false") == 0 && !shutdown) {
+				$( "#dialog-message" ).dialog( "open" );
+				shutdown=true;
 			}
 		});
 		
@@ -48,6 +39,31 @@ var auto_refresh = setInterval(function() {
 		drawGraph();
 	}
 }, 1000); // refresh every second
+
+var shutdown=false;
+
+$("#dialog-message").dialog({
+	autoOpen: false,
+    draggable: false,
+    resizable: false,
+    position: ['center', 'center'],
+    show: 'blind',
+    hide: 'blind',
+    width: 400,
+    dialogClass: 'ui-dialog-osx',
+    buttons: {
+        "STOP": function() {$.ajax({
+			type : "POST",
+			url : "/end",
+			success : function() {
+				$("#dialog-message").hide();
+				$('#container').hide();
+	            $("#dialog-message").dialog("close");
+			}
+		});	
+        }
+    }
+});
 
 var drawGraph = function() {
 		// suspend drawing and initialise.
@@ -143,16 +159,15 @@ $(function() {
 						var key = $("input#frmKey").val();
 						var secondary = $("input#cbxSecondary").val();
 						
-						var msg = "WARNING - You are about to initate a cloning operation that ";
+						var msg = "<p>WARNING - You are about to initate a cloning operation that ";
 						if (secondary.localeCompare("true") == 0) {
 							msg += "will cause a disruption in connectivity.  You should close all connections to " + ns + " and restart all mongos instances once document migration starts.  The clone operation ";
 						}
 						msg += " will place significant load on both the source and target infrastructure.  Confirm?";
-						
 						if (confirm(msg) == false)
 							return;
 						
-						$("#formDiv").html("<div id='synchDiv' style='position:absolute; left:100px; width:600px;'></div>");
+						$("#formDiv").html("");
 
 						$('#perfGraph').html("<div id='term' class='console' style='position:absolute; top:30px; left:50px; min-width:750px;'></div>" + 
 								"<div id='monitor' class='consoleSmall' style='position:absolute; top:430px; left:50px; min-width:750px;'></div>" + 
