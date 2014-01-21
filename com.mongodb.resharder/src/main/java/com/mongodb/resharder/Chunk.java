@@ -60,7 +60,7 @@ public class Chunk implements Comparable<Chunk> {
 				String key = pKey.toString();
 				if (_min == null && _max == null)
 					return false;
-				
+
 				String min = _min.toString();
 				if (_max == null && min.compareTo(key) > 0)
 					return true;
@@ -154,8 +154,7 @@ public class Chunk implements Comparable<Chunk> {
 		if (_min instanceof String) {
 			String min = _min.toString(), max = _max.toString(), oMin = o._min.toString(), oMax = o._max.toString();
 			val = min.compareTo(oMax) >= 0 ? -1 : max.compareTo(oMin) <= 0 ? 1 : 0;
-		}
-		else if (_min instanceof Integer) {
+		} else if (_min instanceof Integer) {
 			Integer min = (Integer) _min, max = (Integer) _max, oMin = (Integer) o._min, oMax = (Integer) o._max;
 			val = min.compareTo(oMax) >= 0 ? -1 : max.compareTo(oMin) <= 0 ? 1 : 0;
 		}
