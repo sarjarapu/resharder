@@ -58,14 +58,27 @@ public class Chunk implements Comparable<Chunk> {
 		try {
 			if (pKey instanceof String) {
 				// TODO this needs some debugging
-				if (_min.toString().compareTo(pKey.toString()) <= 0 && _max.toString().compareTo(pKey.toString()) >= 0)
+				String key = pKey.toString();
+
+				if (_min == null && _max == null)
+					return false;
+				
+				String min = _min.toString();
+				if (_max == null && min.compareTo(key) > 0)
+					return true;
+
+				if (_max == null && min.compareTo(key) <= 0)
 					return false;
 
-				if (_min.toString().compareTo(pKey.toString()) >= 0 && _left != null)
-					return _left.isOrphan(pKey);
+				String max = _max.toString();
+				if (_min == null && max.compareTo(key) < 0)
+					return true;
 
-				if (_max.toString().compareTo(pKey.toString()) < 0 && _right != null)
-					return _right.isOrphan(pKey);
+				if (_min == null && max.compareTo(key) >= 0)
+					return false;
+
+				if (min.compareTo(key) <= 0 && max.compareTo(key) > 0)
+					return false;
 			} else if (pKey instanceof Integer) {
 				Integer key = (Integer) pKey;
 
@@ -88,7 +101,7 @@ public class Chunk implements Comparable<Chunk> {
 				if (_min == null && max.compareTo(key) >= 0)
 					return false;
 
-				if (min.compareTo(key) <= 0 && max.compareTo(key) >= 0)
+				if (min.compareTo(key) <= 0 && max.compareTo(key) > 0)
 					return false;
 			} else if (pKey instanceof Long) {
 				Long key = (Long) pKey;
@@ -112,7 +125,7 @@ public class Chunk implements Comparable<Chunk> {
 				if (_min == null && max.compareTo(key) >= 0)
 					return false;
 
-				if (min.compareTo(key) <= 0 && max.compareTo(key) >= 0)
+				if (min.compareTo(key) <= 0 && max.compareTo(key) > 0)
 					return false;
 			}
 		} catch (Exception e) {
