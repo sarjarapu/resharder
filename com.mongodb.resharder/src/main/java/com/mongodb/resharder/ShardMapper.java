@@ -130,7 +130,13 @@ public class ShardMapper {
 							BasicDBObject collection = new BasicDBObject();
 							collection.put("collection", curColl.get("_id"));
 							_collections.add(curColl.get("_id").toString());
-							collection.put("shard key", curColl.get("key"));
+							
+							DBObject shardKey = (DBObject)curColl.get("key");
+							collection.put("shard key", shardKey);
+							
+							if (Config.get_Namepace().equals(curColl.get("_id")) && shardKey.toMap().values().iterator().next().equals("hashed")) {
+								Config.set_hashed(true);
+							}
 
 							BasicDBList info = (BasicDBList) Config
 									.get_configDB()

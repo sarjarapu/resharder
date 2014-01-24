@@ -18,7 +18,7 @@ public class Config {
 	private static String _ns, _targetns, _reshardKey;
 	private static DBCollection _src, _tgt, _log, _oplog, _nodes;
 	private static DB _adminDB, _configDB, _logDB;
-	private static boolean _secondary = false, _reshard = false, _isCLI = false, _done = false;
+	private static boolean _secondary = false, _reshard = false, _isCLI = false, _done = false, _hashed = false;
 	private static int _readBatch, _writeBatch;
 	private static Map<String, List<Chunk>> _chunks = new HashMap<String, List<Chunk>>();
 	private static AtomicLong _docCount = new AtomicLong(0), _orphanCount = new AtomicLong(0),
@@ -377,5 +377,13 @@ public class Config {
 
 	public static void done(boolean done) {
 		Config._done = done;
+	}
+
+	public static boolean is_hashed() {
+		return _hashed;
+	}
+
+	public static void set_hashed(boolean _hashed) {
+		Config._hashed = _hashed;
 	}
 }

@@ -1,5 +1,9 @@
 package com.mongodb.resharder;
 
+import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Iterator;
 
@@ -54,75 +58,92 @@ public class Chunk implements Comparable<Chunk> {
 	 * @return true if key is in a Chunk range on the tree, false if not
 	 * @throws Exception
 	 */
-	public boolean isOrphan(Object pKey) throws Exception {
-		try {
-			if (pKey instanceof String) {
-				String key = pKey.toString();
-				if (_min == null && _max == null)
-					return false;
+	public boolean isOrphan(Object pKey) {
+		if (Config.is_hashed()) {
+			try {
+				MessageDigest md = MessageDigest.getInstance("MD5");
 
-				String min = _min.toString();
-				if (_max == null && min.compareTo(key) > 0)
-					return true;
+				ByteBuffer buffer = ByteBuffer.allocate(16);
+				buffer.put(md.digest(pKey.toString().getBytes("UTF-8")));
+				buffer.flip();
 
-				if (_max == null && min.compareTo(key) <= 0)
-					return false;
-
-				String max = _max.toString();
-				if (_min == null && max.compareTo(key) < 0)
-					return true;
-
-				if (_min == null && max.compareTo(key) >= 0)
-					return false;
-
-				if (min.compareTo(key) <= 0 && max.compareTo(key) > 0)
-					return false;
-			} else if (pKey instanceof Integer) {
-				Integer key = (Integer) pKey;
-				if (_min == null && _max == null)
-					return false;
-
-				Integer min = (Integer) _min;
-				if (_max == null && min.compareTo(key) > 0)
-					return true;
-
-				if (_max == null && min.compareTo(key) <= 0)
-					return false;
-
-				Integer max = (Integer) _max;
-				if (_min == null && max.compareTo(key) < 0)
-					return true;
-
-				if (_min == null && max.compareTo(key) >= 0)
-					return false;
-
-				if (min.compareTo(key) <= 0 && max.compareTo(key) > 0)
-					return false;
-			} else if (pKey instanceof Long) {
-				Long key = (Long) pKey;
-				if (_min == null && _max == null)
-					return false;
-
-				Long min = (Long) _min;
-				if (_max == null && min.compareTo(key) >= 0)
-					return true;
-
-				if (_max == null && min.compareTo(key) <= 0)
-					return false;
-
-				Long max = (Long) _max;
-				if (_min == null && max.compareTo(key) < 0)
-					return true;
-
-				if (_min == null && max.compareTo(key) >= 0)
-					return false;
-
-				if (min.compareTo(key) <= 0 && max.compareTo(key) > 0)
-					return false;
+				pKey = new Long(buffer.getLong());
+			} catch (NoSuchAlgorithmException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new Exception(e.getMessage());
+		}
+		
+		if (pKey instanceof String) {
+			String key = pKey.toString(), min = null, max = null;
+			if (_min == null && _max == null)
+				return false;
+
+			if (_min != null)
+				min = _min.toString();
+
+			if (_max == null)
+				max = _max.toString();
+
+			if (min != null && min.compareTo(key) > 0) {
+				if (_left == null)
+					return true;
+
+				return _left.isOrphan(pKey);
+			}
+
+			if (_max == null && min.compareTo(key) <= 0)
+				return false;
+
+			if (max != null && max.compareTo(key) <= 0) {
+				if (_right == null)
+					return true;
+
+				return _right.isOrphan(pKey);
+			}
+
+			if (_min == null && max.compareTo(key) >= 0)
+				return false;
+
+			if (min.compareTo(key) <= 0 && max.compareTo(key) > 0)
+				return false;
+
+		} else if (pKey instanceof Integer || pKey instanceof Long) {
+			Long key = Long.parseLong(pKey.toString()), min = null, max = null;
+			if (_min == null && _max == null)
+				return false;
+
+			if (_min != null)
+				min = Long.parseLong(_min.toString());
+
+			if (_max != null)
+				max = Long.parseLong(_max.toString());
+
+			if (min != null && min.compareTo(key) > 0) {
+				if (_left == null)
+					return true;
+
+				return _left.isOrphan(pKey);
+			}
+
+			if (_max == null && min.compareTo(key) <= 0)
+				return false;
+
+			if (max != null && max.compareTo(key) <= 0) {
+				if (_right == null)
+					return true;
+
+				return _right.isOrphan(pKey);
+			}
+
+			if (_min == null && max.compareTo(key) >= 0)
+				return false;
+
+			if (min.compareTo(key) <= 0 && max.compareTo(key) > 0)
+				return false;
 		}
 
 		return true;

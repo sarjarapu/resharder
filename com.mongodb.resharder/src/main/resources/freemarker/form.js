@@ -15,7 +15,7 @@ var auto_refresh = setInterval(function() {
 			document.getElementById("synch").innerHTML = data;
 
 			if (data.localeCompare("done") == 0) {
-				setTimeout(function(){clearInterval(auto_refresh);},3000);
+				setTimeout(function(){clearInterval(auto_refresh);},30000);
 			}
 			
 			if (data.localeCompare("false") == 0 && !shutdown) {
@@ -159,7 +159,7 @@ $(function() {
 						var key = $("input#frmKey").val();
 						var secondary = $("input#cbxSecondary").val();
 						
-						var msg = "<p>WARNING - You are about to initate a cloning operation that ";
+						var msg = "WARNING - You are about to initate a cloning operation that ";
 						if (secondary.localeCompare("true") == 0) {
 							msg += "will cause a disruption in connectivity.  You should close all connections to " + ns + " and restart all mongos instances once document migration starts.  The clone operation ";
 						}
