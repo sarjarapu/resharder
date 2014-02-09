@@ -59,6 +59,8 @@ public class Chunk implements Comparable<Chunk> {
 	 * @throws Exception
 	 */
 	public boolean isOrphan(Object pKey) {
+
+		// Convert the key to a "hashed" key for range comparison
 		if (Config.is_hashed()) {
 			try {
 				MessageDigest md = MessageDigest.getInstance("MD5");
@@ -76,7 +78,8 @@ public class Chunk implements Comparable<Chunk> {
 				e.printStackTrace();
 			}
 		}
-		
+
+		// See if the key is in range
 		if (pKey instanceof String) {
 			String key = pKey.toString(), min = null, max = null;
 			if (_min == null && _max == null)
@@ -92,6 +95,7 @@ public class Chunk implements Comparable<Chunk> {
 				if (_left == null)
 					return true;
 
+				// Key is too low, check the left Chunk
 				return _left.isOrphan(pKey);
 			}
 
@@ -102,6 +106,7 @@ public class Chunk implements Comparable<Chunk> {
 				if (_right == null)
 					return true;
 
+				// Key is too high, check the right Chunk
 				return _right.isOrphan(pKey);
 			}
 

@@ -19,7 +19,7 @@ public class Config {
 	private static DBCollection _src, _tgt, _log, _oplog, _nodes;
 	private static DB _adminDB, _configDB, _logDB;
 	private static boolean _secondary = false, _reshard = false, _isCLI = false, _done = false, _hashed = false;
-	private static int _readBatch, _writeBatch;
+	private static int _readBatch, _writeBatch, _numReaders, _numWriters;
 	private static Map<String, List<Chunk>> _chunks = new HashMap<String, List<Chunk>>();
 	private static AtomicLong _docCount = new AtomicLong(0), _orphanCount = new AtomicLong(0),
 			_oplogCount = new AtomicLong(0), _oplogReads = new AtomicLong(0);
@@ -84,6 +84,8 @@ public class Config {
 		System.out.println("key:           " + _props.get("key"));
 		System.out.println("readBatch:     " + _props.get("readBatch"));
 		System.out.println("writeBatch:    " + _props.get("writeBatch"));
+		System.out.println("numReaders:    " + _props.get("numReaders"));
+		System.out.println("numWriters:    " + _props.get("numWriters"));
 		System.out.println();
 	}
 
@@ -141,18 +143,16 @@ public class Config {
 
 	public static void docWrite(List<DBObject> docs) throws UnknownHostException {
 		if (docs.size() > 0) {
-			// for (DBObject doc : docs) {
-			// _tgt.save(doc);
-			// }
-
-			if (_docCount.get() == 0) {
+			if (_docCount.getAndAdd(docs.size()) == 0) {
 				String[] params = _targetns.split("\\.");
-				_tgt = new MongoClient(_tgtURI).getDB(params[0]).getCollection(params[1]);
+				DB db = new MongoClient(_tgtURI).getDB(params[0]);
+				_tgt = db.getCollection(params[1]);
+				
+				db.requestEnsureConnection();
+				db.requestStart();
 			}
 
 			_tgt.insert(docs.toArray(new DBObject[0]));
-
-			Config._docCount.addAndGet(docs.size());
 		}
 	}
 
@@ -201,6 +201,12 @@ public class Config {
 
 		if (!_props.containsKey("writeBatch"))
 			setProperty("writeBatch", "50");
+
+		if (!_props.containsKey("numReaders"))
+			setProperty("numReaders", "1");
+
+		if (!_props.containsKey("numWriters"))
+			setProperty("numWriters", "1");
 	}
 
 	public static String setProperty(String prop, String val) {
@@ -262,6 +268,18 @@ public class Config {
 				_writeBatch = Integer.parseInt(val);
 				ret = "Write batch size set to " + val;
 				_props.put("writeBatch", val);
+				break;
+
+			case "numReaders":
+				_numReaders = Integer.parseInt(val);
+				ret = "Number of readers per shard set to " + val;
+				_props.put("numReaders", val);
+				break;
+
+			case "numWriters":
+				_numWriters = Integer.parseInt(val);
+				ret = "Number of writers set to " + val;
+				_props.put("numWriters", val);
 				break;
 
 			case "reshard":
@@ -385,5 +403,13 @@ public class Config {
 
 	public static void set_hashed(boolean _hashed) {
 		Config._hashed = _hashed;
+	}
+
+	public static int get_numReaders() {
+		return _numReaders;
+	}
+
+	public static int get_numWriters() {
+		return _numWriters;
 	}
 }

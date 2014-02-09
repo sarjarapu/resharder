@@ -88,7 +88,7 @@ var windows;
 ;(function() {
 	
 	jsPlumb.ready(function() {
-	// setup some defaults for jsPlumb.	
+	// setup some defaults for jsPlumb.
 			instance = jsPlumb.getInstance({
 			Endpoint : ["Dot", {radius:2}],
 			HoverPaintStyle : {strokeStyle:"#1e8151", lineWidth:2 },
@@ -107,22 +107,29 @@ var windows;
 
 		windows = instance.getSelector(".statemachine-demo .w");
 
-	    // initialise draggable elements.  
+	    // initialise draggable elements.
 		instance.draggable(windows);
 
-		// bind a connection listener. note that the parameter passed to this function contains more than
-		// just the new connection - see the documentation for a full list of what is included in 'info'.
+		// bind a connection listener. note that the parameter passed to this
+		// function contains more than
+		// just the new connection - see the documentation for a full list of
+		// what is included in 'info'.
 		// this listener sets the connection's internal
 		// id as the label overlay's text.
         instance.bind("connection", function(info) {
         		info.connection.getOverlay("label").setLabel(info.connection.getParameter("label"));
         });
         
-		// make each ".ep" div a source and give it some parameters to work with.  here we tell it
-		// to use a Continuous anchor and the StateMachine connectors, and also we give it the
-		// connector's paint style.  note that in this demo the strokeStyle is dynamically generated,
-		// which prevents us from just setting a jsPlumb.Defaults.PaintStyle.  but that is what i
-		// would recommend you do. Note also here that we use the 'filter' option to tell jsPlumb
+		// make each ".ep" div a source and give it some parameters to work
+		// with. here we tell it
+		// to use a Continuous anchor and the StateMachine connectors, and also
+		// we give it the
+		// connector's paint style. note that in this demo the strokeStyle is
+		// dynamically generated,
+		// which prevents us from just setting a jsPlumb.Defaults.PaintStyle.
+		// but that is what i
+		// would recommend you do. Note also here that we use the 'filter'
+		// option to tell jsPlumb
 		// which parts of the element should actually respond to a drag start.
 		instance.makeSource(windows, {
 			anchor:"Continuous",
@@ -152,6 +159,8 @@ $(function() {
 						var targetns = $("input#frmTargetns").val();
 						var readBatch = $("input#frmReadBatch").val();
 						var writeBatch = $("input#frmWriteBatch").val();
+						var numReaders = $("input#frmNumReaders").val();
+						var numWriters = $("input#frmNumWriters").val();
 						var srchost = $("input#frmSrc").val();
 						var tgthost = $("input#frmTgt").val();
 						var loghost = $("input#frmLog").val();
@@ -176,10 +185,11 @@ $(function() {
 
 						var dataString = "namespace=" + ns + "&targetns="
 								+ targetns + "&readBatch=" + readBatch
-								+ "&writeBatch=" + writeBatch + "&srchost="
-								+ srchost + "&tgthost=" + tgthost + "&loghost="
-								+ loghost + "&reshard=" + reshard + "&key="
-								+ key + "&secondary=" + secondary;
+								+ "&writeBatch=" + writeBatch + "&numReaders=" 
+								+ numReaders + "&numWriters=" + numWriters
+								+ "&srchost=" + srchost + "&tgthost=" 
+								+ tgthost + "&loghost=" + loghost + "&reshard=" 
+								+ reshard + "&key=" + key + "&secondary=" + secondary;
 
 						$.ajax({
 							type : "GET",

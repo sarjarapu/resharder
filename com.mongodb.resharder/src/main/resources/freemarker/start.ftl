@@ -1,8 +1,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html><head>
+
   
-  <meta content="text/html; charset=ISO-8859-1" http-equiv="content-type">
-  <title>MongoDB Resharder</title>
+  <meta content="text/html; charset=ISO-8859-1" http-equiv="content-type"><title>MongoDB Resharder</title>
+  
 
 
   
@@ -43,8 +44,7 @@
   font-size: 75%;
   height: 100px;
 }
-  </style>
-</head><body>
+  </style></head><body>
 <div id="messages" class="messageLog" style="display: none;"></div>
 <div id="graphUpdate" class="graphUpdate" style="display: none;">true</div>
 <div id="counters" class="counterClass" style="display: none;"></div>
@@ -52,15 +52,15 @@
 <div id="counterVals" class="counterVals" style="display: none;">${data}</div>
 <div id="connectionHTML" class="connectionHTML" style="display: none;">${connectionHTML}</div>
 
-<div id="title" style="text-align: center; min-width:1400px;"><big><big><big>MongoDB
+<div id="title" style="text-align: center; min-width: 1400px;"><big><big><big>MongoDB
 Resharder</big></big></big></div>
 
-<div style="min-width:1600px;">
-<div id="perfGraph" name="perfGraph" style="position: absolute; top: 70px; left: 50px; min-width:800px">
-<pre style="margin-top: 13px; height:800px;  width:800px; overflow:auto;" id="json" class="prettyprint">${collections}</pre>
+<div style="min-width: 1600px;">
+<div id="perfGraph" name="perfGraph" style="position: absolute; top: 70px; left: 50px; min-width: 800px;">
+<pre style="overflow: auto; margin-top: 13px; height: 800px; width: 800px;" id="json" class="prettyprint">${collections}</pre>
 <br class="clear">
 </div>
-<div id="main" style="position: absolute; top: 0px; left: 900px; width:600px; height:800px">
+<div id="main" style="position: absolute; top: 0px; left: 900px; width: 600px; height: 800px;">
 <div class="explanation">
 <h4>WORKFLOW STATE</h4>
 </div>
@@ -70,12 +70,13 @@ Resharder</big></big></big></div>
 </div>
 </div>
 
-<div id="formDiv" style="position: absolute; top: 700px; left: 800px; width:600px;">
+<div id="formDiv" style="position: absolute; top: 700px; left: 800px; width: 600px;">
 <form name="reshard" action="" style="position: relative; left: 10em; text-align: center;">
   <table style="width: 512px; height: 294px;">
     <tbody>
       <tr>
-        <td colspan="5" rowspan="1">Configure Resharder</td>
+        <td colspan="5" rowspan="1">Resharder Options<br>
+</td>
       </tr>
       <tr>
         <td style="text-align: center;">Select
@@ -90,7 +91,7 @@ Collection<br>
         <td colspan="1" rowspan="8" style="vertical-align: top; text-align: left;"> 
 <#list collList as coll>
         <p><input name="namespace" id="frmNamespace" value="${coll}" type="radio">${coll} </p>
-</#list><br>
+</#list>
         </td>
         <td style="vertical-align: middle; text-align: right;">Target
 Host<br>
@@ -141,13 +142,21 @@ Key<br>
         </td>
       </tr>
       <tr>
-        <td style="vertical-align: top;"><br>
+        <td style="vertical-align: top; text-align: right;">Readers<br>
+        </td><td style="vertical-align: top;"><input style="width: 25px;" id="frmNumReaders" name="frmNumReaders" value="1"></td>
+
+        <td colspan="1" rowspan="2" style="vertical-align: middle; text-align: right;">&nbsp;Read&nbsp; from Secondary<br>
         </td>
-        <td colspan="2" rowspan="1" style="vertical-align: middle; text-align: right;">Read Secondary<br>
-        </td>
-        <td style="vertical-align: top;"><input id="cbxSecondary" name="cbxSecondary" type="checkbox"></td>
+        <td colspan="1" rowspan="2" style="vertical-align: middle;"><input id="cbxSecondary" name="cbxSecondary" type="checkbox"></td>
       </tr>
       <tr>
+        <td style="vertical-align: top;"><br>
+        </td>
+        <td style="vertical-align: top; text-align: right;">Writers<br>
+        </td>
+        <td style="vertical-align: top;"><input style="width: 25px;" id="frmNumWriters" name="frmNumWriters" value="1"></td>
+      </tr>
+<tr>
         <td colspan="5" rowspan="1"><button type="submit" name="submit" class="button" id="submit_btn" value="Submit">Reshard</button><br>
         </td>
       </tr>
@@ -157,12 +166,12 @@ Key<br>
 </div>
 
 <div id="dialog-message" title="Collection Synchronized">
-    <span class="ui-state-default"><span class="ui-icon ui-icon-info" style="float:left; margin:0 7px 0 0;"></span></span>
+    <span class="ui-state-default"><span class="ui-icon ui-icon-info" style="margin: 0pt 7px 0pt 0pt; float: left;"></span></span>
     <div style="margin-left: 23px;">
         <p>
             The target collection is now synchronized.
-            <br /><br />
-            Click STOP to terminate the Oplog Readers and reset the shard configuration.<br /><br />
+            <br><br>
+            Click STOP to terminate the Oplog Readers and reset the shard configuration.<br><br>
         </p></div>
 </div>
 

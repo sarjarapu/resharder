@@ -4,6 +4,7 @@
 package com.mongodb.resharder;
 
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
@@ -14,13 +15,17 @@ public class CollectionScanner implements Runnable {
 	private DBCollection _source = null;
 	private boolean _running = false;
 	private static AtomicBoolean _shutdown = new AtomicBoolean(false);
-	private int _numread = 0;
+	private int _numread = 0, _stop;
 	private Chunk _chunkTree;
 	private String _host;
 
-	public CollectionScanner(DBCollection source, Chunk root) {
+	public CollectionScanner(DBCollection source, Chunk root, int start, int stop) {
 		this._source = source;
 		this._chunkTree = root;
+		this._numread = start;
+		this._stop = stop;
+		
+		MessageLog.push("Start: " + start + "  Stop: " + stop, this.getClass().getSimpleName());
 	}
 
 	public void run() {
@@ -43,6 +48,7 @@ public class CollectionScanner implements Runnable {
 					.getSimpleName());
 
 			while (_running && !_shutdown.get()) {
+				
 				DBCursor cursor = _source.find().sort(new BasicDBObject("$natural", 1)).skip(_numread)
 						.limit(Config.get_readBatch());
 
@@ -63,7 +69,14 @@ public class CollectionScanner implements Runnable {
 						} else {
 							Config.orphanDropped();
 						}
+		
 						_numread++;
+						if (_numread == _stop) {
+							_running = false;
+							MessageLog.push("Stopping after reading " + _numread + " documents.", this.getClass().getSimpleName());
+							break;
+						}
+						
 					}
 				} catch (Exception e) {
 					e.printStackTrace();

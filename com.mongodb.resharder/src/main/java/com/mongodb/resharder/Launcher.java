@@ -118,6 +118,8 @@ public class Launcher {
 						map.put("targetns", request.queryParams("targetns"));
 						map.put("readBatch", request.queryParams("readBatch"));
 						map.put("writeBatch", request.queryParams("writeBatch"));
+						map.put("numReaders", request.queryParams("numReaders"));
+						map.put("numWriters", request.queryParams("numWriters"));
 						map.put("reshard", request.queryParams("reshard"));
 						map.put("key", request.queryParams("key"));
 						map.put("secondary", request.queryParams("secondary"));

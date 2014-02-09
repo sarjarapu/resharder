@@ -14,13 +14,13 @@ public class DocWriter implements Runnable {
 
 	private static AtomicBoolean _running = new AtomicBoolean(false);
 	private static AtomicInteger _readers = new AtomicInteger(0);
-	
+
 	private String _host;
-	
+
 	public static void readerStarted() {
 		_readers.incrementAndGet();
 	}
-	
+
 	public static void readerStopped() {
 		_readers.decrementAndGet();
 	}
@@ -33,19 +33,11 @@ public class DocWriter implements Runnable {
 		_queue.offer(obj);
 	}
 
-	int _stopCount = 0;
-
 	public void run() {
 		_running.set(true);
 
 		try {
 			Stack<DBObject> buffer = new Stack<DBObject>();
-
-			// use the same socket for all writes
-			// TODO - determine if we need multiple writers to the same
-			// collection object
-			Config.get_tgtCollection().getDB().requestStart();
-			Config.get_tgtCollection().getDB().requestEnsureConnection();
 
 			_host = Config.get_tgtCollection().getDB().getMongo().getAddress().getHost() + ":"
 					+ Config.get_tgtCollection().getDB().getMongo().getAddress().getPort();
@@ -57,15 +49,12 @@ public class DocWriter implements Runnable {
 
 			while (_running.get()) {
 				while (!_queue.isEmpty()) {
-					_stopCount = 0;
 					// Grab docs of the queue until the buffer is full
 					buffer.push(_queue.poll());
 
 					if (buffer.size() == Config.get_writeBatch()) {
 						// Write the docs to the clone Collection and clear the
 						// buffer
-						// TODO - is there an exception that might need to be
-						// handled here?
 						Config.docWrite(buffer);
 						buffer.clear();
 					}
@@ -74,16 +63,18 @@ public class DocWriter implements Runnable {
 				try {
 					// check to see if we are still copying
 					if (_readers.get() == 0) {
-						// start replaying the oplog
-						MessageLog.push("All readers finshed, commencing Oplog replay...", this.getClass().getSimpleName());
 						Config.docWrite(buffer);
 						buffer.clear();
-						
-						Launcher._tp.execute(new OpLogWriter());
-						
-						break;
+
+						if (_running.compareAndSet(true, false)) {
+							// start replaying the oplog if not already started
+							// by another DocWriter
+							MessageLog.push("All readers finshed, commencing Oplog replay...", this.getClass()
+									.getSimpleName());
+
+							Launcher._tp.execute(new OpLogWriter());
+						}
 					} else {
-						// Wait for more docs
 						Thread.sleep(100);
 					}
 				} catch (InterruptedException ex) {
@@ -96,11 +87,12 @@ public class DocWriter implements Runnable {
 			MessageLog.push("Shutting down clone operation...", this.getClass().getSimpleName());
 		} finally {
 			// close our connection
-			MessageLog.push("disconnected from " + Config.get_tgtCollection().getDB().getMongo().getConnectPoint(), this
-					.getClass().getSimpleName() + ".");
+			MessageLog.push("disconnected from " + Config.get_tgtCollection().getDB().getMongo().getConnectPoint(),
+					this.getClass().getSimpleName() + ".");
 			Config.get_tgtCollection().getDB().requestDone();
-			new Node(Config.get_nodes().findOne(new BasicDBObject("name", "resharder"))).removeConnection(_host, "writer");
-			
+			new Node(Config.get_nodes().findOne(new BasicDBObject("name", "resharder"))).removeConnection(_host,
+					"writer");
+
 			shutdown();
 		}
 	}

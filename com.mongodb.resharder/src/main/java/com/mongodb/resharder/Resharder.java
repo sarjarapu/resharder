@@ -40,9 +40,9 @@ public class Resharder implements Runnable {
 
 		MessageLog.push("Clone/Reshard completed.  namespace: " + Config.get_TargetNamepace(),
 				Resharder.class.getSimpleName());
-		
+
 		Thread.sleep(2000);
-		
+
 		Config.done(true);
 	}
 
@@ -158,17 +158,16 @@ public class Resharder implements Runnable {
 
 			// Start a reader for each shard
 			MessageLog.push("Processing shard config...", Resharder.class.getSimpleName());
-			
+
 			Config.get_nodes().update(new BasicDBObject("name", "mongos"),
 					new BasicDBObject("$set", new BasicDBObject("connections", new DBObject[0])));
-			
+
 			for (Shard shard : shards) {
 				shard.initReaders();
 			}
 
-			// TODO - determine if one writer per reader is needed
-			// queue a writer thread
-			_threads.add(new DocWriter());
+			for (int i = 0; i < Config.get_numWriters(); i++)
+				_threads.add(new DocWriter());
 
 			// if secondary read is true then restart mongos
 			// as it is probably hosed from the rs.reconfig()

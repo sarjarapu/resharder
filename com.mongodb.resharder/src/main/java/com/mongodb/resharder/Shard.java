@@ -1,7 +1,9 @@
 package com.mongodb.resharder;
 
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 import org.bson.types.BSONTimestamp;
@@ -22,7 +24,6 @@ public class Shard {
 	private boolean _isreplset;
 	private DBCollection _oplog, _source;
 	private OpLogReader _olr;
-	private CollectionScanner _cs;
 
 	public Shard(String name, List<ServerAddress> hosts, boolean isreplset) {
 		this._name = name;
@@ -74,7 +75,7 @@ public class Shard {
 
 		String target = oplogClient.getAddress().getHost() + ":" + oplogClient.getAddress().getPort();
 		target = Config.get_nodes().findOne(new BasicDBObject("host", target)).get("name").toString();
-		
+
 		new Node(Config.get_nodes().findOne(new BasicDBObject("name", "mongos"))).addConnection(target, "");
 
 		oplogClient.getDB("admin").requestDone();
@@ -124,7 +125,8 @@ public class Shard {
 		_source = dataClient.getDB(Config.get_Namepace().split("\\.")[0]).getCollection(
 				Config.get_Namepace().split("\\.")[1]);
 
-		// add the connection for the UI data
+		// add the connection for the UI data, TODO - make sure we have to open
+		// this connection to populate the host/port values
 		dataClient.getDB("admin").requestStart();
 		dataClient.getDB("admin").requestEnsureConnection();
 
@@ -138,10 +140,24 @@ public class Shard {
 		Arrays.sort(chunks);
 		Chunk root = chunks[chunks.length / 2].load(chunks, 0, chunks.length - 1);
 
-		// create the collection scanner
-		_cs = new CollectionScanner(_source, root);
+		// add the oplog reader
 		Resharder.addWorker(_olr);
-		Resharder.addWorker(_cs);
+
+		// create and add collection scanners
+		MessageLog.push("Starting " + Config.get_numReaders() + " reader(s)", this.getClass().getSimpleName());
+
+		int start = 0, stop = Integer.parseInt(Long.toString(_source.count()));
+		for (int i = 0; i < Config.get_numReaders(); i++) {
+
+			start = Integer.parseInt(Long.toString(_source.count())) / Config.get_numReaders() * i;
+			
+			if (i + 1 == Config.get_numReaders())
+				stop = Integer.parseInt(Long.toString(_source.count()));
+			else
+				stop = Integer.parseInt(Long.toString(_source.count())) / Config.get_numReaders() * (i + 1);
+
+			Resharder.addWorker(new CollectionScanner(_source, root, start, stop));
+		}
 	}
 
 	public String getName() {
