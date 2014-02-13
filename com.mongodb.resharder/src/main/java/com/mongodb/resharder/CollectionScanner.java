@@ -4,7 +4,6 @@
 package com.mongodb.resharder;
 
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
@@ -24,8 +23,6 @@ public class CollectionScanner implements Runnable {
 		this._chunkTree = root;
 		this._numread = start;
 		this._stop = stop;
-		
-		MessageLog.push("Start: " + start + "  Stop: " + stop, this.getClass().getSimpleName());
 	}
 
 	public void run() {
@@ -73,7 +70,6 @@ public class CollectionScanner implements Runnable {
 						_numread++;
 						if (_numread == _stop) {
 							_running = false;
-							MessageLog.push("Stopping after reading " + _numread + " documents.", this.getClass().getSimpleName());
 							break;
 						}
 						

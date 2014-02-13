@@ -16,6 +16,10 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.FileAppender;
+import org.apache.log4j.PatternLayout;
+
 import freemarker.template.Configuration;
 import freemarker.template.SimpleHash;
 import freemarker.template.Template;
@@ -28,6 +32,9 @@ public class Launcher {
 	public static void main(String[] args) throws IOException {
 		Config.processArgs(args);
 		System.setErr(new PrintStream("./err.log"));
+
+		BasicConfigurator.configure(new FileAppender(new PatternLayout("%d %p %C{1} [%t] %m %n"), "err.log"));
+		
 		spark.Spark.staticFileLocation("/freemarker");
 
 		if (Config.isCLI()) {
