@@ -7,7 +7,7 @@ To create a local test environment unzip test.zip, cd to the test/bin directory 
 
 To run Resharder you can execute the following command from the test/bin directory:
 
-./resharder <congigServers> <logFile>
+./resharder \<congigServers\> \<logFile\>
 
 The configServers parameter is the comma separated list of config servers for your sharded cluster.  If you are running the test environment this would be the following:
 
