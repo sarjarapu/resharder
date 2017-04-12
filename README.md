@@ -21,6 +21,33 @@ Resharder now has a nifty console interface!  If you prefer old school terminal 
 
 EXAMPLE:
 
+killall mongos mongod
+rm -rf source-cluster target-cluster oplog-store
+
+mkdir source-cluster target-cluster oplog-store
+cd source-cluster
+mlaunch init --shards 3 --port 18017 --replicaset --sharded rsSource --csrs
+cd ../target-cluster
+mlaunch init --shards 3 --port 18117 --replicaset --sharded rsTarget --csrs
+cd ../oplog-store
+mlaunch init --port 18217 --replicaset --name rsOplog --csrs
+
+
 resharder localhost:28040,localhost:28041,localhost:28042 ./mongos.log --console
 
 NOTE:  Resharder is currently fully functional, but still in development.  If you have questions feel free to email me at rick.houlihan@mongodb.com and I will try to respond.
+
+mvn clean package
+java -jar resharder-0.9.0-SNAPSHOT.jar 
+--srchost 'localhost:18017'
+--tgthost 'localhost:18117'
+--loghost 'localhost:18217'
+--namespace 
+--targetns 
+--secondary 
+--reshard
+--key "{id:'hashed'}"
+--readBatch 100
+--writeBatch 50
+--numReaders 1
+--numWriters 1
