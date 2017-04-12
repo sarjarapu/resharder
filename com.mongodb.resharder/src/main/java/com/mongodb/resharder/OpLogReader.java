@@ -48,13 +48,13 @@ public class OpLogReader implements Runnable {
 		_readers.add(this);
 
 		while (_running.get()) {
-			_oplog.getDB().requestStart();
-			_oplog.getDB().requestEnsureConnection();
+			//_oplog.getDB().requestStart();
+			//_oplog.getDB().requestEnsureConnection();
 			MessageLog.push("connected to " + _oplog.getDB().getMongo().getConnectPoint() + ".", this.getClass()
 					.getSimpleName());
 
-			Config.get_oplog().getDB().requestStart();
-			Config.get_oplog().getDB().requestEnsureConnection();
+			//Config.get_oplog().getDB().requestStart();
+			//Config.get_oplog().getDB().requestEnsureConnection();
 			MessageLog.push("outputting to " + Config.get_oplog().getDB().getMongo().getConnectPoint() + ".", this
 					.getClass().getSimpleName());
 
@@ -95,8 +95,8 @@ public class OpLogReader implements Runnable {
 				MessageLog.push("disconnected from " + _oplog.getDB().getMongo().getConnectPoint() + ".", this
 						.getClass().getSimpleName());
 
-				_oplog.getDB().requestDone();
-				Config.get_oplog().getDB().requestDone();
+				//_oplog.getDB().requestDone();
+				//Config.get_oplog().getDB().requestDone();
 
 				new Node(Config.get_nodes().findOne(new BasicDBObject("name", "resharder"))).removeConnection(_host,
 						"oplogTail");

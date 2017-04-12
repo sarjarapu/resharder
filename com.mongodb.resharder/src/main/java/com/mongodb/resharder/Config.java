@@ -148,8 +148,8 @@ public class Config {
 				DB db = new MongoClient(_tgtURI).getDB(params[0]);
 				_tgt = db.getCollection(params[1]);
 				
-				db.requestEnsureConnection();
-				db.requestStart();
+				//db.requestEnsureConnection();
+				//db.requestStart();
 			}
 
 			_tgt.insert(docs.toArray(new DBObject[0]));
@@ -246,7 +246,7 @@ public class Config {
 				_oplog = _logDB.getCollection("oplog_out");
 				_log.drop();
 				_oplog.drop();
-				_oplog.ensureIndex(new BasicDBObject("ts", 1));
+				_oplog.createIndex(new BasicDBObject("ts", 1));
 
 				ret = "Log host set to " + val;
 				_props.put("log", val);

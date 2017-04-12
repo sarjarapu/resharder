@@ -87,7 +87,7 @@ public class ShardMapper {
 				}
 
 				y -= --i * 6;
-			} catch (UnknownHostException e) {
+			} catch (Exception e) {
 				return null;
 			}
 

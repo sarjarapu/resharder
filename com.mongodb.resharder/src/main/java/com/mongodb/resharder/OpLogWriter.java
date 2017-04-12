@@ -31,8 +31,8 @@ public class OpLogWriter implements Runnable {
 		DBCursor oplog = null;
 		try {
 			// use the same socket for all writes
-			Config.get_oplog().getDB().requestStart();
-			Config.get_oplog().getDB().requestEnsureConnection();
+			//Config.get_oplog().getDB().requestStart();
+			//Config.get_oplog().getDB().requestEnsureConnection();
 
 			//set host name and create edge for UI graph
 			_host = Config.get_tgtCollection().getDB().getMongo().getAddress().getHost() + ":"
@@ -94,7 +94,7 @@ public class OpLogWriter implements Runnable {
 		} finally {
 			// close our connection
 			oplog.close();
-			Config.get_oplog().getDB().requestDone();
+			//Config.get_oplog().getDB().requestDone();
 			
 			// remove edge from UI graph
 			new Node(Config.get_nodes().findOne(new BasicDBObject("name", "resharder"))).removeConnection(_host,

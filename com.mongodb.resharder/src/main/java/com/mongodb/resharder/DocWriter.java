@@ -89,7 +89,7 @@ public class DocWriter implements Runnable {
 			// close our connection
 			MessageLog.push("disconnected from " + Config.get_tgtCollection().getDB().getMongo().getConnectPoint(),
 					this.getClass().getSimpleName() + ".");
-			Config.get_tgtCollection().getDB().requestDone();
+			//Config.get_tgtCollection().getDB().requestDone();
 			new Node(Config.get_nodes().findOne(new BasicDBObject("name", "resharder"))).removeConnection(_host,
 					"writer");
 

@@ -33,8 +33,8 @@ public class CollectionScanner implements Runnable {
 		try {
 			_shutdown.set(false);
 
-			_source.getDB().requestStart();
-			_source.getDB().requestEnsureConnection();
+			//_source.getDB().requestStart();
+			//_source.getDB().requestEnsureConnection();
 
 			_host = _source.getDB().getMongo().getAddress().getHost() + ":"
 					+ _source.getDB().getMongo().getAddress().getPort();
@@ -87,7 +87,7 @@ public class CollectionScanner implements Runnable {
 			new Node(Config.get_nodes().findOne(new BasicDBObject("name", "resharder"))).removeConnection(_host,
 					"reader");
 
-			_source.getDB().requestDone();
+			//_source.getDB().requestDone();
 			MessageLog.push("disconnected from " + _source.getDB().getMongo().getConnectPoint() + ".", this.getClass()
 					.getSimpleName());
 

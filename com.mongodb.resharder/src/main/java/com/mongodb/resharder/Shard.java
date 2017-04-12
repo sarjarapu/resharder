@@ -68,15 +68,15 @@ public class Shard {
 
 		// we need to hold a connection open to read the currently connected
 		// host
-		oplogClient.getDB("admin").requestStart();
-		oplogClient.getDB("admin").requestEnsureConnection();
+		//oplogClient.getDB("admin").requestStart();
+		//oplogClient.getDB("admin").requestEnsureConnection();
 
 		String target = oplogClient.getAddress().getHost() + ":" + oplogClient.getAddress().getPort();
 		target = Config.get_nodes().findOne(new BasicDBObject("host", target)).get("name").toString();
 
 		new Node(Config.get_nodes().findOne(new BasicDBObject("name", "mongos"))).addConnection(target, "");
 
-		oplogClient.getDB("admin").requestDone();
+		//oplogClient.getDB("admin").requestDone();
 
 		// Get a pointer to the shard Primary oplog.rs
 		_oplog = oplogClient.getDB("local").getCollection("oplog.rs");
@@ -125,13 +125,13 @@ public class Shard {
 
 		// add the connection for the UI data, TODO - make sure we have to open
 		// this connection to populate the host/port values
-		dataClient.getDB("admin").requestStart();
-		dataClient.getDB("admin").requestEnsureConnection();
+		//dataClient.getDB("admin").requestStart();
+		//dataClient.getDB("admin").requestEnsureConnection();
 
 		target = dataClient.getAddress().getHost() + ":" + dataClient.getAddress().getPort();
 		target = Config.get_nodes().findOne(new BasicDBObject("host", target)).get("name").toString();
 
-		dataClient.getDB("admin").requestDone();
+		//dataClient.getDB("admin").requestDone();
 
 		String key = Config.get_Namepace() + "." + _name;
 		Chunk[] chunks = Config.get_chunks().get(key).toArray(new Chunk[0]);
