@@ -1,9 +1,10 @@
 #!/bin/bash
 
 ps aux | grep -ie mongo | awk '{print $2}' | xargs kill -9
+
 rm -rf ../data/*
 
-mkdir ../data/rs1-1
+mkdir -p ../data/rs1-1
 mkdir ../data/rs1-2
 mkdir ../data/rs1-3
 mkdir ../data/rs2-1
@@ -56,7 +57,7 @@ sh.shardCollection("test.grades",{student_id:1})
 EOF
 
 c=1
-while [ $c -le 2 ]
+while [ $c -le 300 ]
 do
 	mongoimport --port 28010 --db test --collection grades --jsonArray --file ../import/records.json
 	(( c++ ))
