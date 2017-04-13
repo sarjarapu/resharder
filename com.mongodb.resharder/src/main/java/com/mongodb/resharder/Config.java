@@ -74,9 +74,9 @@ public class Config {
 		System.out.println();
 		System.out.println("Current Configuration");
 		System.out.println();
-		System.out.println("source:        " + _props.get("source"));
-		System.out.println("target:        " + _props.get("target"));
-		System.out.println("log:           " + _props.get("log"));
+		System.out.println("srchost:        " + _props.get("srchost"));
+		System.out.println("tgthost:        " + _props.get("tgthost"));
+		System.out.println("loghost:           " + _props.get("loghost"));
 		System.out.println("namespace:     " + _props.get("namespace"));
 		System.out.println("targetns:      " + _props.get("targetns"));
 		System.out.println("readSecondary: " + _props.get("readSecondary"));
@@ -223,7 +223,7 @@ public class Config {
 				_configDB = mongo.getDB("config");
 
 				ret = "Source host set to " + val;
-				_props.put("source", val);
+				_props.put("srchost", val);
 				break;
 
 			case "tgthost":
@@ -234,7 +234,7 @@ public class Config {
 				_tgt = mongo.getDB(params[0]).getCollection(params[1]);
 
 				ret = "Target host set to " + val;
-				_props.put("target", val);
+				_props.put("tgthost", val);
 				break;
 
 			case "loghost":
@@ -249,7 +249,7 @@ public class Config {
 				_oplog.createIndex(new BasicDBObject("ts", 1));
 
 				ret = "Log host set to " + val;
-				_props.put("log", val);
+				_props.put("loghost", val);
 				break;
 
 			case "secondary":

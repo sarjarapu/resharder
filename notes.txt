@@ -34,7 +34,8 @@ java -jar resharder-0.9.0-SNAPSHOT.jar
 
 'localhost:18027'
 
-java -jar resharder-0.9.0-SNAPSHOT.jar --namespace social.people --targetns social.people --source localhost:18017 --target localhost:18117 --oplog localhost:18217
+java -jar resharder-0.9.0-SNAPSHOT.jar --namespace social.people --targetns social.people --srchost localhost:18017 --tgthost localhost:18117 --loghost localhost:18217
+--namespace social.people --targetns social.people --source localhost:18017 --target localhost:18117 --oplog localhost:18217
 
 targetns is required before setting the tgthost 
 ideally should be able to pick every db, every collection and every document
