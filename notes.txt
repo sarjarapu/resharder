@@ -1,0 +1,44 @@
+
+EXAMPLE:
+
+killall mongos mongod
+rm -rf source-cluster target-cluster oplog-store
+
+mkdir source-cluster target-cluster oplog-store
+cd source-cluster
+mlaunch init --port 18017 --replicaset --nodes 3 --shards 3 --csrs 
+cd ../target-cluster
+mlaunch init --port 18117 --replicaset --nodes 3 --shards 3 --csrs 
+cd ../oplog-store
+mlaunch init --port 18217 --replicaset --nodes 3 --name rsOplog
+
+
+resharder localhost:28040,localhost:28041,localhost:28042 ./mongos.log --console
+
+NOTE:  Resharder is currently fully functional, but still in development.  If you have questions feel free to email me at rick.houlihan@mongodb.com and I will try to respond.
+
+mvn clean package
+java -jar resharder-0.9.0-SNAPSHOT.jar 
+--namespace social.people
+--targetns social.people 
+--srchost localhost:18017
+--tgthost localhost:18117
+--loghost rsOplog/localhost:18217
+--secondary 
+--reshard
+--key "{id:'hashed'}"
+--readBatch 100
+--writeBatch 50
+--numReaders 1
+--numWriters 1
+
+'localhost:18027'
+
+java -jar resharder-0.9.0-SNAPSHOT.jar --namespace social.people --targetns social.people --source localhost:18017 --target localhost:18117 --oplog localhost:18217
+
+targetns is required before setting the tgthost 
+ideally should be able to pick every db, every collection and every document
+oplog is getting dropped at the beginning 
+input args loading should be independent of the validation 
+load defaults checks for srchost, but key used is source 
+default settings is reshard and key : _id: hashed always
