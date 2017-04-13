@@ -84,7 +84,7 @@ Collection<br>
         </td>
         <td style="text-align: right;">Source Host<br>
         </td>
-        <td colspan="3" rowspan="1"><input style="width: 250px;" id="frmSrc" name="srchost" value="localhost:27017"><br>
+        <td colspan="3" rowspan="1"><input style="width: 250px;" id="frmSrc" name="srchost" value="localhost:28010"><br>
         </td>
       </tr>
       <tr>
@@ -96,13 +96,13 @@ Collection<br>
         <td style="vertical-align: middle; text-align: right;">Target
 Host<br>
         </td>
-        <td colspan="3" rowspan="1" style="vertical-align: top;"><input style="width: 250px;" id="frmTgt" name="tgthost" value="localhost:27017"></td>
+        <td colspan="3" rowspan="1" style="vertical-align: top;"><input style="width: 250px;" id="frmTgt" name="tgthost" value="localhost:28117"></td>
       </tr>
       <tr>
         <td style="vertical-align: middle; text-align: right;">Log
 Host<br>
         </td>
-        <td colspan="3" rowspan="1" style="vertical-align: top;"><input style="width: 250px;" id="frmLog" name="loghost" value="localhost:28017"><br>
+        <td colspan="3" rowspan="1" style="vertical-align: top;"><input style="width: 250px;" id="frmLog" name="loghost" value="localhost:28217"><br>
         </td>
       </tr>
       <tr>

@@ -244,7 +244,7 @@ public class Launcher {
 				new Node("resharder", "localhost", 2, 6);
 				new Node("loghost", Config.get_logDB().getMongo().getAddress().getHost() + ":"
 						+ Config.get_logDB().getMongo().getAddress().getPort(), 2, 18);
-				new Node("mongos", "localhost:27017", 30, 6);
+				new Node("mongos", "localhost:280", 30, 6);
 
 				template.process(ShardMapper.getShardingStatus(hash), writer);
 			}

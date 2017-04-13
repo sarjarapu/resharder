@@ -173,13 +173,13 @@ public class Config {
 
 	private static void loadDefaults() {
 		if (!_props.containsKey("srchost"))
-			setProperty("srchost", "localhost:27017");
+			setProperty("srchost", "localhost:28010");
 
 		if (!_props.containsKey("tgthost"))
-			setProperty("tgthost", "localhost:27017");
+			setProperty("tgthost", "localhost:18117");
 
 		if (!_props.containsKey("loghost"))
-			setProperty("loghost", "localhost:28017");
+			setProperty("loghost", "localhost:18217");
 
 		if (!_props.containsKey("namespace"))
 			setProperty("namespace", "test.grades");
